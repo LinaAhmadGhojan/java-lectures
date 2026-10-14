@@ -50,7 +50,8 @@ public class MainMenu {
         System.out.println("  2) If / else");
         System.out.println("  3) Loops (for, while, do-while)");
         System.out.println(" -- Exercise --");
-        System.out.println("  4) Exercise 1: Student (it asks you to type a name and 3 marks)");
+        System.out.println("  4) Exercise 1: Student   (the input is read from the file input.txt)");
+        System.out.println("  5) Exercise 1: Student   (you type the input yourself)");
         System.out.println("  0) Exit");
     }
 
@@ -95,12 +96,17 @@ public class MainMenu {
                     break;
 
                 case 4:
-                    show("Exercise 1: Student", "src/exercises/ex1_student", "Student.java (the main method is inside the class)");
+                    show("Exercise 1: Student (input from input.txt)", "src/exercises/ex1_student", "Student.java (the main method is inside the class)");
+                    // نشغّل نفس برنامج التمرين، لكن "ما يكتبه المستخدم" يأتي من الملف input.txt
+                    runWithInputFile("input.txt", () -> exercises.ex1_student.Student.main(noArgs));
+                    break;
+                case 5:
+                    show("Exercise 1: Student (you type the input)", "src/exercises/ex1_student", "Student.java (the main method is inside the class)");
                     exercises.ex1_student.Student.main(noArgs);
                     break;
 
                 default:
-                    System.out.println(paint(RED, "Invalid choice. Enter a number from 0 to 4, or m to show the menu."));
+                    System.out.println(paint(RED, "Invalid choice. Enter a number from 0 to 5, or m to show the menu."));
                     return;
             }
         } catch (Exception e) {
@@ -111,6 +117,76 @@ public class MainMenu {
         System.out.println();
         System.out.println(paint(GREEN, "================ end of example ================"));
         System.out.println();
+    }
+
+    // ------------------------------------------------------- الإدخال من ملف
+
+    /**
+     * يشغّل برنامجاً يقرأ من لوحة المفاتيح (Scanner) لكن يعطيه محتوى ملف نصي بدل ما يكتبه المستخدم.
+     * كل سطر يُقرأ من الملف نطبعه بالأخضر حتى نرى الإدخال كأنه كُتب بيدنا.
+     * إذا لم يوجد الملف نرجع للإدخال اليدوي.
+     */
+    static void runWithInputFile(String fileName, Runnable program) {
+        java.io.File file = new java.io.File(fileName);
+        if (!file.exists()) {
+            System.out.println(paint(RED, "File " + fileName + " was not found, so type the input yourself:"));
+            program.run();
+            return;
+        }
+        System.out.println(paint(BLUE, "(the input is read from " + fileName + " - open it and change the values!)"));
+        java.io.InputStream original = System.in;
+        try {
+            System.setIn(new LineEchoInputStream(new java.io.FileInputStream(file)));
+            program.run();
+        } catch (IOException e) {
+            System.out.println(paint(RED, "Could not read " + fileName + ": " + e));
+        } finally {
+            System.setIn(original);   // نرجع الدخل الأصلي ليعمل مع القائمة
+        }
+    }
+
+    /** مجرى دخل يعطي الملف سطراً سطراً ويطبع كل سطر بالأخضر عند قراءته. */
+    static class LineEchoInputStream extends java.io.InputStream {
+        private final java.io.BufferedReader reader;
+        private byte[] pending = new byte[0];
+        private int pos = 0;
+
+        LineEchoInputStream(java.io.InputStream in) throws IOException {
+            this.reader = new java.io.BufferedReader(new java.io.InputStreamReader(in, "UTF-8"));
+        }
+
+        private boolean fill() throws IOException {
+            String line = reader.readLine();
+            if (line == null) {
+                return false;
+            }
+            System.out.println(paint(GREEN, line));
+            pending = (line + "\n").getBytes("UTF-8");
+            pos = 0;
+            return true;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (pos >= pending.length && !fill()) {
+                return -1;
+            }
+            return pending[pos++] & 0xFF;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (len == 0) {
+                return 0;
+            }
+            if (pos >= pending.length && !fill()) {
+                return -1;
+            }
+            int n = Math.min(len, pending.length - pos);
+            System.arraycopy(pending, pos, b, off, n);
+            pos += n;
+            return n;
+        }
     }
 
     /** يطبع اسم المثال ومكان الكود قبل تشغيله. */
