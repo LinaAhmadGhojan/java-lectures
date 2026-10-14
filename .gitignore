@@ -1,0 +1,9 @@
+# Build output
+out/
+*.class
+
+# IntelliJ personal files (the shared project settings in .idea ARE kept on purpose)
+.idea/workspace.xml
+.idea/shelf/
+.idea/dataSources/
+.idea/httpRequests/
