@@ -12,6 +12,7 @@
 | 4 | [04_exercise1_question.png](files/04_exercise1_question.png) | **سؤال التمرين 1** (حاول حله بنفسك أولاً) |
 | 5 | [05_exercise1_solution.pdf](files/05_exercise1_solution.pdf) | حل التمرين 1 مع الشرح |
 | 6 | [06_homework2_question.png](files/06_homework2_question.png) | **الواجب 2: فاتورة مشتريات** (حاول حله بنفسك) |
+| 7 | [07_homework2_invoice_output.png](files/07_homework2_invoice_output.png) | شكل ناتج الفاتورة المطلوب (قارن به بعد حل الواجب) |
 
 ### 💻 الكود (مجلد `code/`)
 
