@@ -1,0 +1,838 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wildcards: المحاضرة الخامسة التفاعلية</title>
+<style>
+:root{
+  --teal:#0e7c86; --teal-d:#0a5c64; --teal-l:#e3f4f5;
+  --ink:#1f2937; --mute:#64748b; --line:#dbe3ea; --paper:#f4f7fa; --card:#fff;
+  --code-bg:#0f172a; --code-fg:#e2e8f0; --code-bar:#e1f1f3;
+  --g:#1f9d55; --g-bg:#e6f6ec; --r:#d64545; --r-bg:#fde9e9; --y:#e0a800; --y-bg:#fff3c4; --b:#2f6fd6; --b-bg:#e8f0fd; --o:#e8761e; --o-bg:#fdeede;
+  --pen:#d9363e;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+code{direction:ltr;unicode-bidi:isolate;background:#e8eef3;padding:1px 6px;border-radius:5px;font-family:Consolas,"Courier New",monospace;font-size:.92em;color:#0b3a66}
+header{display:flex;align-items:center;gap:14px;padding:10px 22px;border-bottom:3px solid var(--teal);background:#fff}
+header .sub{font-size:13px;color:var(--mute);white-space:nowrap}
+header h1{flex:1;margin:0;font-size:22px;color:var(--teal-d);display:flex;align-items:center;gap:12px}
+header .num{display:inline-grid;place-items:center;min-width:34px;height:34px;border-radius:50%;background:var(--teal);color:#fff;font-size:16px;font-weight:700}
+#bar{height:5px;background:#e5ecf1}
+#bar i{display:block;height:100%;width:0;background:var(--teal);transition:width .35s}
+
+main{flex:1;min-height:0;padding:16px 22px 6px;display:flex}
+.stage{position:relative;flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px}
+.stage.nocode{grid-template-columns:1fr}
+.panel{min-height:0;overflow:hidden;border-radius:12px}
+.codep{background:var(--code-bg);display:flex;flex-direction:column;box-shadow:0 2px 10px #0002}
+.codep .bar{background:var(--code-bar);color:#0a6b75;font:12px Consolas,monospace;padding:6px 12px;direction:ltr;text-align:left;border-bottom:1px solid #b8dadd}
+.code{direction:ltr;text-align:left;padding:10px 0;font:clamp(15px,1.75vw,23px)/1.8 Consolas,"Courier New",monospace;color:var(--code-fg);overflow:auto;flex:1;white-space:pre}
+.code.sm{font-size:clamp(12.5px,1.35vw,17px);line-height:1.7}
+.ln{display:flex;padding:0 14px 0 0;border-left:4px solid transparent;transition:background .25s}
+.ln .no{width:38px;flex:none;text-align:right;padding-right:12px;color:#51627c;user-select:none}
+.ln.hl{animation:flash .9s ease-out;background:#24507f;border-left-color:#fbbf24;box-shadow:inset 0 0 0 1px #4a7fb8}
+.ln.ok{background:#12372a}.ln.err{background:#43202a}
+.ln.ok.hl{background:#17503a}.ln.err.hl{background:#5c2433}
+.ln.dim{opacity:.32}
+.kw{color:#c792ea;font-weight:700}.ty{color:#ffd166}.st{color:#a5e075}.cm{color:#7f93b0}.nu{color:#f78c6c}.wc{color:#ff9f43;font-weight:700;font-size:1.12em}
+.tk{border-radius:4px}
+
+.board{position:relative;background:#fff;border:1px solid var(--line);padding:14px 16px;display:flex;flex-direction:column;justify-content:center;gap:12px;
+  background-image:linear-gradient(#f2f6f9 1px,transparent 1px),linear-gradient(90deg,#f2f6f9 1px,transparent 1px);background-size:26px 26px}
+.board h3{margin:0 0 4px;font-size:clamp(17px,1.7vw,22px);color:var(--teal-d)}
+.rv{opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .45s,transform .45s,visibility .45s}
+.rv.on{opacity:1;visibility:visible;transform:none}
+svg .rv{transform:none}
+
+.chip{display:inline-block;direction:ltr;font:600 clamp(14px,1.65vw,21px) Consolas,monospace;padding:6px 12px;border-radius:10px;border:2px solid var(--line);background:#fff;white-space:nowrap}
+.chip.g{border-color:var(--g);background:var(--g-bg);color:#116534}.chip.r{border-color:var(--r);background:var(--r-bg);color:#9b1c1c}
+.chip.y{border-color:var(--y);background:var(--y-bg);color:#7a5a00}.chip.b{border-color:var(--b);background:var(--b-bg);color:#1c4aa0}.chip.o{border-color:var(--o);background:var(--o-bg);color:#9a4a0c}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;direction:ltr;justify-content:center}
+.arrow{font-size:22px;color:var(--mute);font-weight:700}
+.arrow.ok{color:var(--g)}.arrow.no{color:var(--r)}
+.verdict{font-weight:700;font-size:clamp(15px,1.5vw,19px)}.verdict.ok{color:var(--g)}.verdict.no{color:var(--r)}
+.card{border:2px solid var(--line);border-radius:12px;padding:12px 16px;background:#fff;line-height:1.75;font-size:clamp(15px,1.5vw,19px)}
+.card.g{border-color:var(--g);background:var(--g-bg)}.card.r{border-color:var(--r);background:var(--r-bg)}.card.y{border-color:var(--y);background:var(--y-bg)}.card.b{border-color:var(--b);background:var(--b-bg)}.card.o{border-color:var(--o);background:var(--o-bg)}
+.card b.t{display:block;font-size:1.05em;margin-bottom:2px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.collapse .rv:not(.on){display:none}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.big{font-size:clamp(22px,3vw,40px);font-weight:800;text-align:center;direction:ltr}
+.stamp{display:inline-block;border:3px solid;border-radius:12px;padding:4px 14px;font-weight:800;font-size:18px;transform:rotate(-4deg)}
+.stamp.g{color:var(--g);border-color:var(--g)}.stamp.r{color:var(--r);border-color:var(--r)}.stamp.b{color:var(--b);border-color:var(--b)}
+.term{direction:ltr;text-align:left;background:#0b1220;color:#d6e2f0;border-radius:10px;padding:10px 14px;font:clamp(15px,1.6vw,20px)/1.6 Consolas,monospace;white-space:pre}
+.term .p{color:#7f93b0}
+.tbl{width:100%;border-collapse:collapse;font-size:clamp(15px,1.5vw,19px)}
+.tbl th{background:var(--teal-l);padding:7px 10px;text-align:right;border:1px solid var(--line)}
+.tbl td{padding:7px 10px;border:1px solid var(--line);text-align:right;background:#fff}
+.tbl tr.rv.on{display:table-row}
+.tbl tr.rv{transform:none}
+svg.tree{width:100%;height:auto;max-height:100%;direction:ltr}
+svg text{font-family:Consolas,"Segoe UI",monospace}
+.node rect{fill:#fff;stroke:#94a3b8;stroke-width:2;rx:10;transition:all .4s}
+.node text{font-size:17px;font-weight:700;fill:#334155;text-anchor:middle}
+.node.ok rect{fill:var(--g-bg);stroke:var(--g)}.node.ok text{fill:#116534}
+.node.bad rect{fill:var(--r-bg);stroke:var(--r)}.node.bad text{fill:#9b1c1c}
+.node.cap rect{stroke:var(--b);stroke-width:4;fill:var(--b-bg)}.node.cap text{fill:#1c4aa0}
+.edge{stroke:#94a3b8;stroke-width:2;fill:none}
+.arAr{font-family:"Segoe UI",Tahoma,sans-serif!important;font-weight:600}
+
+@keyframes flash{0%{box-shadow:inset 0 0 0 100px rgba(251,191,36,.5)}100%{box-shadow:inset 0 0 0 1px #4a7fb8}}
+/* explanation box */
+.col{display:flex;flex-direction:column;gap:12px;min-height:0;min-width:0}
+.col .board{flex:1;min-height:0;height:100%}
+.explain{position:absolute;z-index:9;left:0;top:0;width:min(400px,38%);background:#fffffff2;border:1.5px solid #c9d6de;border-radius:10px;padding:14px 14px 8px;font-size:clamp(14px,1.2vw,17px);line-height:1.6;color:#334155;box-shadow:0 3px 10px #0001;opacity:0;pointer-events:none;transition:opacity .2s,border-color .3s}
+.explain.show{opacity:1}
+.explain.ready{}
+.explain::before{position:absolute;top:-10px;right:12px;background:var(--teal);color:#fff;font-size:11px;font-weight:700;padding:0 10px;border-radius:7px}
+.explain::after{content:'';position:absolute;left:var(--tx,50%);width:16px;height:16px;background:inherit;border:inherit;transform:translateX(-50%) rotate(45deg)}
+.explain[data-dir=up]::after{top:-10px;border-right:0;border-bottom:0}
+.explain[data-dir=down]::after{bottom:-10px;border-left:0;border-top:0}
+.explain[data-dir=none]::after{display:none}
+.explain{--pc:14,124,134}
+.explain.ok{border-color:var(--g);--pc:31,157,85}.explain.ok::before{background:var(--g)}
+.explain.err{border-color:var(--r);background:#fff8f8;--pc:214,69,69}.explain.err::before{background:var(--r)}
+.explain::before{content:attr(data-label)}
+.explain .lead{display:block;font-weight:700;font-size:1.04em;color:var(--teal-d);margin-bottom:2px}
+.explain.ok .lead{color:#116534}.explain.err .lead{color:#a01b1b}
+.explain.f{}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(var(--pc),.55)}100%{box-shadow:0 0 0 22px rgba(var(--pc),0)}}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+footer{display:flex;align-items:center;gap:10px;padding:10px 22px 14px}
+.btn{font:700 16px "Segoe UI",Tahoma,sans-serif;border:0;border-radius:10px;padding:10px 22px;cursor:pointer;background:var(--teal);color:#fff;transition:filter .2s,transform .1s}
+.btn:hover{filter:brightness(1.1)}.btn:active{transform:scale(.96)}
+.btn.ghost{background:#fff;color:var(--teal-d);border:2px solid var(--teal)}
+.btn:disabled{opacity:.35;cursor:default}
+.dots{flex:1;display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap}
+.dots i{width:10px;height:10px;border-radius:50%;background:#c6d3dc;cursor:pointer;transition:all .25s}
+.dots i.d{background:var(--teal)}.dots i.c{background:var(--pen);transform:scale(1.5)}
+.cnt{font-size:13px;color:var(--mute);min-width:70px;text-align:center}
+
+/* ink layer */
+#ink{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible}
+#ink svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#ink path,#ink ellipse{fill:none;stroke:var(--pen);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:draw .75s ease forwards}
+#ink .fillarrow{fill:var(--pen);stroke:none;stroke-dasharray:none;stroke-dashoffset:0;opacity:0;animation:fade2 .2s .6s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fade2{to{opacity:1}}
+.note{position:absolute;max-width:270px;font:700 16px/1.5 "Segoe UI",Tahoma,sans-serif;background:#fff;color:#1f2937;border:2px solid var(--pen);border-radius:8px;padding:5px 12px;box-shadow:0 4px 12px #0002;opacity:0;animation:pop .35s .35s forwards;z-index:6;pointer-events:none}
+.note.g{border-color:var(--g);color:#0f5a30}.note.r{border-color:var(--r);color:#8a1717}
+@keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.badge{position:absolute;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:900;font-size:20px;opacity:0;animation:pop2 .3s .2s forwards;z-index:6}
+.badge.t{background:var(--g)}.badge.x{background:var(--r)}
+@keyframes pop2{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+#laser{position:absolute;width:30px;height:30px;z-index:7;pointer-events:none;filter:drop-shadow(0 2px 3px #0006);transition:left .7s cubic-bezier(.3,.8,.3,1),top .7s cubic-bezier(.3,.8,.3,1),opacity .3s;opacity:0}
+
+/* menu */
+#menu{position:fixed;inset:0;background:#0008;display:none;z-index:50;align-items:center;justify-content:center}
+#menu.on{display:flex}
+#menu .box{background:#fff;border-radius:16px;max-width:760px;width:92%;max-height:84vh;overflow:auto;padding:18px 22px}
+#menu h2{margin:0 0 10px;color:var(--teal-d)}
+#menu a{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--ink);text-decoration:none}
+#menu a:hover{background:var(--teal-l)}
+#menu a b{display:inline-grid;place-items:center;min-width:28px;height:28px;border-radius:50%;background:var(--teal);color:#fff;font-size:13px}
+#menu a.ex b{background:var(--o)}
+.narr-only{display:none}
+body.narr .narr-only{display:inline-flex}
+#brate,#bvoice{font:700 14px "Segoe UI",Tahoma,sans-serif;border:2px solid var(--teal);border-radius:10px;padding:8px 10px;background:#fff;color:var(--teal-d);cursor:pointer}
+#start{position:fixed;inset:0;background:#0b1220cc;display:none;z-index:60;align-items:center;justify-content:center}
+body.narr #start.on{display:flex}
+#start .box{background:#fff;border-radius:18px;max-width:560px;width:92%;padding:28px 30px;text-align:center;box-shadow:0 20px 60px #0008}
+#start h2{margin:0 0 8px;color:var(--teal-d);font-size:28px}
+#start p{margin:0 0 18px;line-height:1.8;color:#475569}
+#start .btn{display:block;width:100%;margin:8px 0;font-size:18px;padding:14px}
+@media (max-width:900px){body{overflow:auto;display:block}header{flex-wrap:wrap;padding:8px 12px}header .sub{display:none}header h1{font-size:17px;min-width:60%}.btn{padding:8px 12px;font-size:14px}main{display:block;padding:10px 12px}.stage{display:flex;flex-direction:column;gap:10px}.panel{min-height:200px}footer{padding:10px 12px}.dots{display:none}.code{font-size:13px}.cnt{display:none}footer{justify-content:space-between}}
+@media print{body{overflow:visible}}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="num" id="hn">1</span><span id="ht"></span></h1>
+  <span class="sub">عملي برمجة 3 · المحاضرة الخامسة</span>
+  <button class="btn ghost" id="bmenu" title="قائمة الشرائح (M)">☰ الشرائح</button>
+  <button class="btn ghost" id="bsnd" title="مؤثرات الصوت (S)">الصوت: تشغيل</button>
+  <button class="btn ghost narr-only" id="bplay" title="إيقاف / متابعة (P)">إيقاف مؤقت</button>
+  <button class="btn ghost narr-only" id="bauto" title="الانتقال التلقائي للخطوة التالية">تقدم تلقائي: تشغيل</button>
+  <select class="narr-only" id="brate" title="سرعة الكلام"><option value="0.9">بطيء</option><option value="1" selected>عادي</option><option value="1.15">أسرع</option><option value="1.3">سريع</option></select>
+  <select class="narr-only" id="bvoice" title="الصوت"><option value="laith">صوت: ليث (سوري)</option><option value="hamed">صوت: حامد (سعودي)</option></select>
+  <button class="btn ghost" id="bfs" title="ملء الشاشة (F)">⛶</button>
+</header>
+<div id="bar"><i></i></div>
+<main><div class="stage" id="stage"></div></main>
+<footer>
+  <button class="btn" id="bnext">التالي ▶</button>
+  <div class="dots" id="dots"></div>
+  <span class="cnt" id="cnt"></span>
+  <button class="btn ghost" id="bprev">◀ السابق</button>
+</footer>
+<div id="start"><div class="box"><h2>الشرح الصوتي</h2>
+  <p>سيشرح لك الأستاذ كل شريحة بالصوت وهو يرسم ويؤشّر على اللوح، وينتقل للخطوة التالية تلقائياً.<br>اختر الصوت لتبدأ:</p>
+  <button class="btn" id="s_laith">ابدأ بصوت ليث (سوري)</button>
+  <button class="btn ghost" id="s_hamed">ابدأ بصوت حامد (سعودي)</button></div></div>
+<div id="menu"><div class="box"><h2>شرائح المحاضرة</h2><div id="mlist"></div></div></div>
+
+<script>
+const CODE = {"review": ["class {{an:Animal}} { String name; }", "class Dog {{ex2:extends Animal}} { }", "class Cat {{ex3:extends Animal}} { }", "", "class {{bx:Box<T>}} { T value; }", "", "Animal a = new {{nd:Dog}}();  // ok"], "inv1": ["{{b1:Box<Dog>}} bd = new Box<>();", "{{ba:Box<Animal> ba}} = bd;  // compile error"], "inv2": ["{{b1:Box<Dog>}} bd = new Box<>();", "Box<Animal> {{ba2:ba}} = bd;  // suppose allowed", "ba.set({{c3:new Cat()}});     // fine for Animal box", "{{d4:Dog}} d = bd.get();      // gets a Cat!"], "prob": ["static void printName({{par:Box<Animal> b}}) {", "    System.out.println(b.get().name);", "}", "printName(new {{a4:Box<Animal>}}());  // ok", "printName(new {{d5:Box<Dog>}}());     // error", "printName(new {{c6:Box<Cat>}}());     // error"], "unb": ["static void show(Box<{{q:?}}> b) {", "    {{o:Object}} o = b.get();", "    b.set({{x:\"x\"}});  // compile error", "    b.set({{nl:null}}); // ok", "}", "show(new {{s6:Box<String>}}());", "show(new {{i7:Box<Integer>}}());"], "ext": ["static void printName(Box<{{q:?}} {{xa:extends Animal}}> b) {", "    {{an2:Animal}} a = b.get();", "    System.out.println(a.name);", "}", "printName(new {{d5:Box<Dog>}}());     // ok", "printName(new {{c6:Box<Cat>}}());     // ok", "printName(new {{a7:Box<Animal>}}());  // ok", "printName(new {{s8:Box<String>}}());  // error"], "extr": ["Box<? extends Animal> b = new {{bd:Box<Dog>}}();", "{{g2:Animal}} a = b.get();        // ok", "b.set({{d3:new Dog()}});           // error", "b.set({{a4:new Animal()}});        // error"], "sup": ["static void addDog(Box<{{q:?}} {{xa:super Dog}}> b) {", "    b.set({{nd:new Dog()}});", "}", "addDog(new {{d4:Box<Dog>}}());     // ok", "addDog(new {{a5:Box<Animal>}}());  // ok", "addDog(new {{o6:Box<Object>}}());  // ok", "addDog(new {{c7:Box<Cat>}}());     // error"], "supr": ["Box<? super Dog> b = new {{ba:Box<Animal>}}();", "b.set({{nd2:new Dog()}});     // ok", "{{ob:Object}} o = b.get();   // ok", "{{dg:Dog}} d = b.get();      // error"], "pecs": ["static void copy({{fr:Box<? extends Animal> from}},", "                 {{to:Box<? super Animal> to}}) {", "    {{op:to.set(from.get())}};", "}", "copy(new Box<Dog>(), new {{t5:Box<Animal>}}());  // ok", "copy(new Box<Dog>(), new {{t6:Box<Object>}}());  // ok"], "num": ["static double twice(Box<? extends {{nb:Number}}> b) {", "    return b.get().{{dv:doubleValue()}} * 2;", "}", "twice(new {{i4:Box<Integer>}}(5));", "twice(new {{d5:Box<Double>}}(2.5));", "twice(new {{s6:Box<String>}}(\"x\"));  // error"], "b1": ["static <{{tt:T}}> void printName(T a) {", "    System.out.println({{nm:a.name}});  // error", "}"], "b2": ["static <{{tx:T extends Animal}}> void printName(T a) {", "    System.out.println({{nm:a.name}});  // ok", "}", "printName(new {{dg4:Dog(\"Rex\")}});  // ok", "printName(new {{ct5:Cat(\"Tom\")}});  // ok", "printName({{st:\"text\"}});          // error"], "b3a": ["// without T: returns Animal only", "static {{ra:Animal}} first(Animal a, Animal b) { return a; }", "{{e3:Dog d}} = first(new Dog(\"A\"), new Dog(\"B\"));  // error", "", "// with T: returns the same type it receives", "static <T extends Animal> {{rt:T}} first(T a, T b) { return a; }", "{{o7:Dog d}} = first(new Dog(\"A\"), new Dog(\"B\"));  // ok"], "b3b": ["interface Pet { void play(); }", "class Dog extends Animal implements Pet { /* ... */ }", "static <{{tb:T extends Animal & Pet}}> void care(T x) {", "    System.out.println({{xn:x.name}});  // from Animal", "    {{xp:x.play()}};                    // from Pet", "}", "care(new {{dd:Dog(\"Rex\")}});  // ok: Animal and Pet", "care(new {{cc:Cat(\"Tom\")}});  // error: Cat is not a Pet"], "wt": ["// wildcard: types may differ", "static void show({{bq:Box<?> b}}) { }", "show(new {{s3:Box<String>}}(\"a\"));   // ok", "show(new {{i4:Box<Integer>}}(5));    // ok", "", "// T: same type in both places", "static <{{tt:T}}> void swapValues(Box<T> a, Box<T> b) {", "    {{tp:T tmp}} = a.get();", "    a.set(b.get());", "    b.set(tmp);", "}", "swapValues(new Box<String>(\"a\"), new {{b12:Box<String>}}(\"b\"));  // ok", "swapValues(new Box<String>(\"a\"), new {{b13:Box<Integer>}}(5));   // error"], "to": ["// flexible, longer signature", "static void {{m1:copy}}({{cf:Box<? extends Animal> from}}, Box<? super Animal> to) { }", "// clearer, less flexible", "static <{{t2:T extends Animal}}> void {{m2:copy2}}(Box<T> from, Box<T> to) { }", "", "copy({{k6:dogBox}}, animalBox);    // ok", "{{c7:copy2}}(dogBox, animalBox);   // error", "{{c8:copy2}}(dogBox, dogBox2);     // ok"], "notes": ["{{n1:Box<?>}} a = new Box<String>();  // ok", "Box<?> b = new {{n2:Box<?>}}();       // error", "", "// invalid:", "// {{n5:Box<? extends A super B>}} c;"], "ex1": ["class {{an:Animal}} {", "    String name;", "    Animal(String name) { this.name = name; }", "}", "class {{dg:Dog}} {{ex:extends Animal}} {", "    Dog(String name) { super(name); }", "}", "class Cat extends Animal {", "    Cat(String name) { super(name); }", "}", "class {{bx:Box<T>}} {", "    private T value;", "    Box(T value) { this.value = value; }", "    T get() { return value; }", "    void set(T value) { this.value = value; }", "}", "public class Ex1 {", "    public static void main(String[] args) {", "        Animal a = new {{nd:Dog(\"Rex\")}};", "        {{bd:Box<Dog>}} bd = new Box<>(new Dog(\"Rex\"));", "        // {{ba:Box<Animal> ba}} = bd;  // compile error", "        System.out.println({{pa:a.name}});", "        System.out.println({{pb:bd.get().name}});", "    }", "}"], "ex2": ["public class Ex2 {", "    static void show({{bq:Box<?> b}}) {", "        {{o:Object}} o = b.get();", "        // b.set({{sx:\"x\"}});  // compile error", "        System.out.println(\"Box contains: \" + {{ov:o}});", "    }", "    public static void main(String[] args) {", "        Box<String> s = new Box<>({{jv:\"Java\"}});", "        Box<Integer> n = new Box<>({{iv:42}});", "        show({{ss:s}});", "        show({{sn:n}});", "    }", "}"], "ex3": ["public class Ex3 {", "    static void printName({{bp:Box<? extends Animal> b}}) {", "        {{an:Animal}} a = b.get();", "        System.out.println({{an2:a.name}});", "    }", "    public static void main(String[] args) {", "        {{t7:Box<Dog>}} d = new Box<>(new Dog(\"Rex\"));", "        {{t8:Box<Cat>}} c = new Box<>(new Cat(\"Tom\"));", "        {{t9:Box<Animal>}} g = new Box<>(new Animal(\"Generic\"));", "        printName({{p10:d}});", "        printName({{p11:c}});", "        printName({{p12:g}});", "        // printName(new {{bs:Box<String>(\"x\")}});  // error", "    }", "}"], "ex4": ["public class Ex4 {", "    static void addDog({{bp:Box<? super Dog> b}}) {", "        b.set({{nd:new Dog(\"Max\")}});", "    }", "    public static void main(String[] args) {", "        {{t6:Box<Dog>}} bd = new Box<>(null);", "        {{t7:Box<Animal>}} ba = new Box<>(null);", "        {{t8:Box<Object>}} bo = new Box<>(null);", "        addDog({{a9:bd}});", "        addDog({{a10:ba}});", "        addDog({{a11:bo}});", "        System.out.println({{p12:bd.get().name}});", "        System.out.println({{p13:ba.get().name}});", "        // addDog(new {{bc:Box<Cat>(null)}});  // error", "    }", "}"], "ex5": ["public class Ex5 {", "    static void copy({{fr:Box<? extends Animal> from}},", "                     {{to:Box<? super Animal> to}}) {", "        {{op:to.set(from.get())}};", "    }", "    public static void main(String[] args) {", "        {{src:Box<Dog> source}} = new Box<>(new Dog(\"Rex\"));", "        {{t1:Box<Animal> t1}} = new Box<>(null);", "        {{t2:Box<Object> t2}} = new Box<>(null);", "        copy({{a10:source}}, {{b10:t1}});", "        copy({{a11:source}}, {{b11:t2}});", "        System.out.println(t1.get().name);", "        // {{rv:copy(t1, source)}};  // error", "    }", "}"], "ex6": ["public class Ex6 {", "    static <{{tb:T extends Animal}}> void printName(T a) {", "        System.out.println({{nm:a.name}});", "    }", "    static <T extends Animal> {{rt:T}} first(T a, T b) {", "        return {{ra:a}};", "    }", "    public static void main(String[] args) {", "        Dog d1 = new Dog(\"Rex\");", "        Dog d2 = new Dog(\"Max\");", "        printName({{d1:d1}});", "        {{dd:Dog d}} = first(d1, d2);", "        System.out.println(d.name);", "        // printName({{tx:\"text\"}});  // error", "    }", "}"]};
+const PT = {"review": {"1": ["an", ""], "2": ["ex2", "Dog يرث من Animal"], "3": ["ex3", ""], "5": ["bx", "صندوق: T = نوع اللي بداخله"], "7": ["nd", "كلب داخل متغير حيوان"]}, "inv1": {"1": ["b1", "صندوق كلاب"], "2": ["ba", "ليس صندوق Dog!"]}, "inv2": {"1": ["b1", "قفص كلاب"], "2": ["ba2", "ba يشير لنفس القفص"], "3": ["c3", "قطة داخل قفص الكلاب!"], "4": ["d4", "نريد Dog ونجد Cat"]}, "prob": {"1": ["par", "صندوق Animal فقط"], "4": ["a4", "Animal مقبول"], "5": ["d5", "Dog مرفوض"], "6": ["c6", "Cat مرفوض"]}, "unb": {"1": ["q", "? = أي نوع"], "2": ["o", "النتيجة Object فقط"], "3": ["x", "ممنوع: لا نعرف النوع"], "4": ["nl", "null فقط مسموح"], "6": ["s6", ""], "7": ["i7", ""]}, "ext": {"1": ["xa", "الشرط: يرث من Animal"], "2": ["an2", "نقرأ كـ Animal"], "5": ["d5", ""], "6": ["c6", ""], "7": ["a7", ""], "8": ["s8", "String لا يرث من Animal"]}, "extr": {"1": ["bd", "نعطيه صندوق كلاب"], "2": ["g2", "القراءة: حيوان"], "3": ["d3", "قد يكون Box<Cat>"], "4": ["a4", "حتى Animal ممنوع"]}, "sup": {"1": ["xa", "الشرط: Dog أو آباؤه"], "2": ["nd", "كلب يدخل بأمان"], "4": ["d4", ""], "5": ["a5", ""], "6": ["o6", ""], "7": ["c7", "Cat ليس Dog ولا أباً له"]}, "supr": {"1": ["ba", "نعطيه صندوق Animal"], "2": ["nd2", "كل الأنواع تقبل كلباً"], "3": ["ob", "Object دائماً ممكن"], "4": ["dg", "نريد Dog ولا نضمنه"]}, "pecs": {"1": ["fr", "المصدر: extends"], "2": ["to", "الهدف: super"], "3": ["op", "نقرأ ثم نكتب"], "5": ["t5", ""], "6": ["t6", ""]}, "num": {"1": ["nb", "سقف الأعداد: Number"], "2": ["dv", "متوفرة في Number"], "4": ["i4", ""], "5": ["d5", ""], "6": ["s6", "String ليس عدداً"]}, "b1": {"1": ["tt", "T: أي نوع"], "2": ["nm", "Object ما فيه name"]}, "b2": {"1": ["tx", "الشرط: T حيوان"], "2": ["nm", "name مضمون الآن"], "4": ["dg4", ""], "5": ["ct5", ""], "6": ["st", "String ليس حيواناً"]}, "b3a": {"2": ["ra", "ترجع Animal دائماً"], "3": ["e3", "Animal لا يتحول إلى Dog"], "6": ["rt", "ترجع نفس نوع المدخل"], "7": ["o7", "النتيجة Dog مباشرة"]}, "b3b": {"3": ["tb", "شرطان معاً: Animal وPet"], "4": ["xn", "من Animal"], "5": ["xp", "من Pet"], "7": ["dd", "Dog يحقق الشرطين"], "8": ["cc", "Cat ليس Pet"]}, "wt": {"2": ["bq", "لا نسمّي النوع"], "3": ["s3", ""], "4": ["i4", ""], "7": ["tt", "T يتكرر بالمكانين"], "8": ["tp", "نخزن بنفس النوع"], "12": ["b12", "String مع String"], "13": ["b13", "String مع Integer"]}, "to": {"2": ["m1", "هذا تابع اسمه copy"], "4": ["m2", "وهذا تابع ثان اسمه copy2"], "6": ["k6", "Dog إلى Animal"], "7": ["c7", "T لا يكون Dog وAnimal"], "8": ["c8", "النوع نفسه"]}, "notes": {"1": ["n1", ""], "2": ["n2", "ممنوع new مع ?"], "5": ["n5", "ممنوع جمع شرطين"]}, "ex1": {"1": ["an", ""], "5": ["ex", "Dog يرث من Animal"], "11": ["bx", "الصندوق العام"], "19": ["nd", "كلب داخل متغير حيوان"], "20": ["bd", "صندوق كلاب"], "21": ["ba", "Invariance"], "22": ["pa", ""], "23": ["pb", ""]}, "ex2": {"2": ["bq", "تقبل أي صندوق"], "3": ["o", "النتيجة Object"], "4": ["sx", "الكتابة مرفوضة"], "5": ["ov", "toString للقيمة"], "8": ["jv", "صندوق نصوص"], "9": ["iv", "صندوق أعداد"], "10": ["ss", ""], "11": ["sn", ""]}, "ex3": {"2": ["bp", "Animal أو أبناؤه"], "3": ["an", "قراءة آمنة"], "4": ["an2", ""], "7": ["t7", ""], "8": ["t8", ""], "9": ["t9", ""], "10": ["p10", ""], "11": ["p11", ""], "12": ["p12", ""], "13": ["bs", "String ليس حيواناً"]}, "ex4": {"2": ["bp", "Dog أو أعلى"], "3": ["nd", "كتابة آمنة"], "6": ["t6", ""], "7": ["t7", ""], "8": ["t8", ""], "9": ["a9", ""], "10": ["a10", ""], "11": ["a11", ""], "12": ["p12", ""], "13": ["p13", ""], "14": ["bc", "Cat لا يقبل كلباً"]}, "ex5": {"2": ["fr", "المصدر: منتج"], "3": ["to", "الهدف: مستهلك"], "4": ["op", "نقرأ ثم نكتب"], "7": ["src", "صندوق كلاب"], "8": ["t1", ""], "9": ["t2", ""], "10": ["a10", ""], "11": ["a11", ""], "13": ["rv", "العكس مرفوض"]}, "ex6": {"2": ["tb", "T حيوان أو ابنه"], "3": ["nm", "name مضمون"], "5": ["rt", "ترجع T نفسه"], "6": ["ra", ""], "11": ["d1", ""], "12": ["dd", "النتيجة Dog مباشرة"], "14": ["tx", "String ليس حيواناً"]}};
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const fmt=s=>s.replace(/\[\[(.+?)\]\]/g,(m,t)=>'<code>'+esc(t)+'</code>');
+
+/* ---------- code rendering ---------- */
+function hi(s){
+  const re=/(\/\/.*$)|("[^"]*")|\b(class|extends|super|static|void|new|return|public|private|double|int|null)\b|\b([A-Z][A-Za-z0-9]*)\b|\b(\d+(?:\.\d+)?)\b|(\?)/g;
+  let out='',last=0,m;
+  while((m=re.exec(s))){
+    out+=esc(s.slice(last,m.index));
+    const c=m[1]?'cm':m[2]?'st':m[3]?'kw':m[4]?'ty':m[5]?'nu':'wc';
+    out+=`<span class="${c}">${esc(m[0])}</span>`; last=re.lastIndex;
+  }
+  return out+esc(s.slice(last));
+}
+function lineHtml(line){
+  let out='',last=0,m;const re=/\{\{(\w+):(.*?)\}\}/g;
+  while((m=re.exec(line))){ out+=hi(line.slice(last,m.index))+`<span class="tk" data-k="${m[1]}">${hi(m[2])}</span>`; last=re.lastIndex; }
+  return out+hi(line.slice(last));
+}
+const FILES={ex1:'Ex1.java',ex2:'Ex2.java',ex3:'Ex3.java',ex4:'Ex4.java',ex5:'Ex5.java',ex6:'Ex6.java'};
+function codePanel(id){
+  const rows=CODE[id].map((l,i)=>`<div class="ln" data-n="${i+1}"><span class="no">${l.trim()===''?'':i+1}</span><span>${lineHtml(l)||' '}</span></div>`).join('');
+  return `<div class="panel codep"><div class="bar">${FILES[id]||'Wildcards.java'}</div><div class="code${CODE[id].length>12?' sm':''}">${rows}</div></div>`;
+}
+const parseLines=s=>{const r=[];if(!s)return r;String(s).split(',').forEach(p=>{const [a,b]=p.split('-').map(Number);for(let i=a;i<=(b||a);i++)r.push(i)});return r;};
+
+/* ---------- board helpers ---------- */
+function tree(kind){
+  const A=kind==='num';
+  const N=A?{Object:[230,32],Number:[130,128],String:[345,128],Integer:[60,226],Double:[200,226]}
+           :{Object:[230,32],Animal:[130,128],String:[345,128],Dog:[60,226],Cat:[200,226]};
+  const E=A?[['Number','Object'],['String','Object'],['Integer','Number'],['Double','Number']]
+           :[['Animal','Object'],['String','Object'],['Dog','Animal'],['Cat','Animal']];
+  let s=`<svg class="tree" viewBox="0 0 420 262"><defs><marker id="ah" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="12" markerHeight="12" orient="auto"><path d="M1 1 L11 6 L1 11 Z" fill="#fff" stroke="#94a3b8" stroke-width="1.8" style="animation:none;stroke-dasharray:none;stroke-dashoffset:0"/></marker></defs>`;
+  E.forEach(([c,p])=>{s+=`<line class="edge" x1="${N[c][0]}" y1="${N[c][1]-18}" x2="${N[p][0]}" y2="${N[p][1]+18}" marker-end="url(#ah)"/>`});
+  Object.entries(N).forEach(([k,[x,y]])=>{s+=`<g class="node" data-k="n-${k}"><rect x="${x-48}" y="${y-18}" width="96" height="36"/><text x="${x}" y="${y+6}">${k}</text></g>`});
+  return s+'</svg>';
+}
+const treeBoard=(kind,cap)=>`<div class="board panel"><h3>${cap}</h3>${tree(kind)}</div>`;
+
+/* ---------- slides ---------- */
+const S=[];
+const slide=(o)=>S.push(o);
+
+slide({title:'شغلتان مختلفتان: الوراثة والـ Generics',code:'review',
+ board:()=>`<div class="board panel" style="gap:6px;padding:8px 12px"><div style="height:clamp(90px,15vh,120px);flex:none">${tree('animal').replace('<svg class="tree"','<svg class="tree" style="height:100%;width:100%"')}</div>
+   <div class="grid2">
+    <div class="card b rv" data-k="inh"><b class="t">1) الوراثة (Inheritance)</b>علاقة بين <b>حيوانين</b>: [[Dog]] يرث من [[Animal]]، يعني <b>الكلب هو حيوان</b>.</div>
+    <div class="card o rv" data-k="gen"><b class="t">2) الـ Generics</b>علاقة بين <b>صناديق</b>: [[Box<T>]] صندوق، و[[T]] هو نوع اللي بداخله.</div></div>
+   <div class="grid2 rv" data-k="gen2"><div class="card o" style="text-align:center;padding:6px"><span class="chip o">Box&lt;Dog&gt;</span><div>صندوق «كلاب فقط»</div></div><div class="card o" style="text-align:center;padding:6px"><span class="chip o">Box&lt;Animal&gt;</span><div>صندوق «أي حيوان»</div></div></div>
+   <div class="card y rv" data-k="q" style="text-align:center;font-weight:700">الكلب هو حيوان (وراثة). لكن: هل <b>صندوق الكلاب</b> هو <b>صندوق حيوانات</b>؟</div></div>`,
+ steps:[
+  {say:'اليوم في عندنا شغلتين مختلفتين لازم ما نخلطهم. الأولى: <b>الوراثة</b>. [[Dog]] و[[Cat]] يرثان من [[Animal]]، يعني كل كلب هو حيوان، وكل قطة هي حيوان.',hl:'1-3',show:['inh'],marks:[{k:'n-Dog',t:'circle'},{k:'n-Cat',t:'circle'}]},
+  {say:'بسبب الوراثة، بقدر أحط كلب بمتغير من نوع حيوان. السطر 7 مقبول.',hl:'7',ok:'7',show:['inh'],marks:[{k:'nd',t:'arrow',text:'كلب داخل متغير حيوان ✓',pos:'bottom',c:'g'}]},
+  {say:'الثانية: <b>الـ Generics</b>، وهي موضوع مختلف. [[Box<T>]] هو <b>صندوق</b>، والحرف [[T]] مكان فاضي لنوع الشي اللي بداخله. أنا بختار النوع وقت الاستعمال.',hl:'5',show:['inh','gen'],marks:[{k:'gen',t:'circle'}]},
+  {say:'يعني [[Box<Dog>]] صندوق مكتوب عليه «كلاب فقط»، و[[Box<Animal>]] صندوق مكتوب عليه «أي حيوان». هدول <b>نوعين مختلفين من الصناديق</b>.',hl:'5',show:['inh','gen','gen2'],marks:[{k:'gen2',t:'circle'}]},
+  {say:'السؤال الآن عن الصناديق وليس عن الحيوانات: الكلب هو حيوان، لكن هل صندوق الكلاب هو صندوق حيوانات؟ الجواب بالشريحة الجاية.',show:['inh','gen','gen2','q'],marks:[{k:'q',t:'circle'}]},
+ ]});
+
+slide({title:'مفاجأة: الصناديق لا ترث من بعضها',code:'inv1',
+ board:()=>`<div class="board panel">
+   <div class="card g"><b class="t">الحيوانات (وراثة)</b><div class="row"><span class="chip g">Dog</span><span class="arrow ok">⟶ is-a ⟶</span><span class="chip g">Animal</span><span class="verdict ok">✔ الكلب هو حيوان</span></div></div>
+   <div class="card rv" data-k="bx"><b class="t">الصناديق (Generics)</b><div class="row"><span class="chip b">Box&lt;Dog&gt;</span><span class="arrow no" data-k="ar">⟶ ✘ ⟶</span><span class="chip b">Box&lt;Animal&gt;</span><span class="verdict no">✘ ليس نفسه</span></div></div>
+   <div class="card y rv" data-k="ana"><b class="t">فكّر بقفصين</b>قفص عليه لافتة «كلاب فقط»، وقفص ثاني عليه لافتة «أي حيوان». الكلب حيوان، <b>لكن هذا لا يجعل القفصين نفس الشيء</b>.</div>
+   <div class="card o rv" data-k="inv" style="text-align:center"><span class="big" style="font-size:26px">Invariance = الثبات</span><div>كل نوع عام يبقى منفصلاً عن الآخر</div></div></div>`,
+ steps:[
+  {say:'عندنا [[bd]]: <b>صندوق كلاب</b>. لافتته: «كلاب فقط».',hl:'1'},
+  {say:'نحاول نقول لـ Java: اعتبر صندوق الكلاب هو صندوق حيوانات. لكن Java ترفض وتعطي خطأ ترجمة.',hl:'2',err:'2',show:['bx'],marks:[{k:'ar',t:'cross'},{k:'ba',t:'circle'}]},
+  {say:'ليش؟ لأن علاقة «هو» موجودة <b>بين الحيوانات</b> فقط (الكلب هو حيوان). هي <b>ما بتنتقل</b> للصناديق اللي بتحملهم.',show:['bx'],marks:[{k:'bx',t:'circle'}]},
+  {say:'تخيّل قفصين: واحد لافتته «كلاب فقط» وواحد لافتته «أي حيوان». هدول قفصين مختلفين، مع إنو الكلب حيوان.',show:['bx','ana'],marks:[{k:'ana',t:'ul'}]},
+  {say:'اسم هذه الخاصية <b>Invariance</b> أي الثبات: [[Box<Dog>]] و[[Box<Animal>]] نوعان منفصلان تماماً. وفي الشريحة التالية نرى ليش Java تمنعه.',show:['bx','ana','inv'],marks:[{k:'inv',t:'circle'}]},
+ ]});
+
+slide({title:'لماذا يمنع المترجم ذلك؟',code:'inv2',
+ board:()=>`<div class="board panel"><svg class="tree" viewBox="0 0 480 320">
+  <g data-k="box"><rect x="285" y="80" width="150" height="150" rx="14" fill="#fff" stroke="#334155" stroke-width="4"/><text x="360" y="255" text-anchor="middle" class="arAr" style="font-size:15px" fill="#475569">الصندوق الحقيقي في الذاكرة</text></g>
+  <g class="rv" data-k="bd"><rect x="18" y="52" width="130" height="42" rx="10" fill="#e8f0fd" stroke="#2f6fd6" stroke-width="2.5"/><text x="83" y="79" text-anchor="middle" style="font-size:16px;font-weight:700" fill="#1c4aa0">bd : Box&lt;Dog&gt;</text><path d="M148 73 L285 125" stroke="#2f6fd6" stroke-width="3" fill="none" marker-end="url(#ab)"/></g>
+  <g class="rv" data-k="ba"><rect x="18" y="226" width="150" height="42" rx="10" fill="#fdeede" stroke="#e8761e" stroke-width="2.5"/><text x="93" y="253" text-anchor="middle" style="font-size:16px;font-weight:700" fill="#9a4a0c">ba : Box&lt;Animal&gt;</text><path d="M168 240 L285 190" stroke="#e8761e" stroke-width="3" fill="none" marker-end="url(#ab2)"/></g>
+  <defs><marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#2f6fd6"/></marker><marker id="ab2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#e8761e"/></marker></defs>
+  <g class="rv" data-k="cat"><rect x="305" y="135" width="110" height="50" rx="10" fill="#fde9e9" stroke="#d64545" stroke-width="3"/><text x="360" y="169" text-anchor="middle" style="font-size:24px;font-weight:800" fill="#9b1c1c">Cat</text></g>
+  <g class="rv" data-k="boom"><rect x="20" y="130" width="230" height="64" rx="12" fill="#fde9e9" stroke="#d64545" stroke-width="2.5"/><text x="135" y="157" text-anchor="middle" style="font-size:15px;font-weight:700" fill="#9b1c1c">Dog d = ؟؟؟</text><text x="135" y="180" text-anchor="middle" style="font-size:15px;font-weight:700" fill="#9b1c1c">ClassCastException</text></g>
+ </svg></div>`,
+ steps:[
+  {say:'عندنا [[bd]] يشير إلى <b>قفص كلاب</b>. هذا القفص موجود مرة واحدة فقط بالذاكرة.',hl:'1',show:['bd'],marks:[{k:'bd',t:'circle'}]},
+  {say:'لنفترض أن Java <b>سمحت</b> بالسطر 2. فيصير [[ba]] يشير لنفس القفص، لكنه يعتبره «قفص أي حيوان».',hl:'2',show:['ba'],marks:[{k:'box',t:'arrow',text:'القفص نفسه!',pos:'top'}]},
+  {say:'عن طريق [[ba]] أحط قطة. هذا مسموح، لأن [[ba]] يظن أن القفص يقبل أي حيوان.',hl:'3',ok:'3',show:['cat'],marks:[{k:'cat',t:'circle'}]},
+  {say:'لكن [[bd]] ما زال يظن أن القفص «كلاب فقط». لما يطلب منه كلباً يعطيه قطة، وينهار البرنامج.',hl:'4',err:'4',show:['boom'],marks:[{k:'boom',t:'circle'}]},
+  {say:'لهذا السبب Java تمنع السطر 2 من الأساس: صندوق الكلاب لا يمكن اعتباره صندوق حيوانات. وهذا معنى <b>Type Safety</b>: الخطأ يظهر عند الترجمة وليس عند الزبون.',hl:'2',clr:true,err:'2',show:['boom']},
+ ]});
+
+slide({title:'المشكلة العملية',code:'prob',
+ board:()=>`<div class="board panel collapse" style="gap:8px;padding:10px 14px">
+   <h3 style="margin:0">ماذا تقبل التابع [[printName]]؟</h3>
+   <div class="grid3">
+    <div class="card rv" data-k="r1" style="text-align:center;padding:8px"><span class="chip b">Box&lt;Animal&gt;</span><div class="verdict ok" data-k="v1">✔ مقبول</div></div>
+    <div class="card rv" data-k="r2" style="text-align:center;padding:8px"><span class="chip b">Box&lt;Dog&gt;</span><div class="verdict no" data-k="v2">✘ مرفوض</div></div>
+    <div class="card rv" data-k="r3" style="text-align:center;padding:8px"><span class="chip b">Box&lt;Cat&gt;</span><div class="verdict no" data-k="v3">✘ مرفوض</div></div></div>
+   <div class="card r rv" data-k="dup" style="text-align:center;padding:6px 10px">الحل البدائي: تابع لكل نوع = تكرار نريد الابتعاد عنه</div>
+   <div class="card y rv" data-k="wq" style="padding:8px 14px"><b class="t">علامة الاستفهام [[?]] تعني: «أي نوع، ما يهمني»</b>
+     <table class="tbl" style="margin-top:4px"><tr><td><code>Box&lt;Animal&gt;</code></td><td>صندوق <b>حيوانات</b> فقط</td></tr><tr><td><code>Box&lt;?&gt;</code></td><td>صندوق من <b>أي نوع</b> (ما يهمني اللي بداخله)</td></tr></table></div>
+   <div class="card g rv" data-k="wdemo" style="padding:8px 14px"><b class="t">Wildcard = «بطاقة بيضاء» تنطبق على أي نوع</b>
+     <div class="row"><span class="chip g">Box&lt;Dog&gt;</span><span class="chip g">Box&lt;Cat&gt;</span><span class="chip g">Box&lt;String&gt;</span><span class="chip g">Box&lt;Integer&gt;</span></div>
+     <div style="text-align:center">كلها تدخل في [[Box<?>]] ✔</div></div>
+   <div class="card o rv" data-k="wbound" style="padding:8px 14px">لكن نحن نريد أدق: صندوق <b>حيوانات</b> فقط، وليس أي صندوق. فنضيف شرطاً: [[? extends Animal]] = «أي نوع بشرط أن يكون حيواناً». نشرحه بعد شريحتين.</div></div>`,
+ steps:[
+  {say:'نريد تابع تطبع اسم الحيوان الموجود في أي صندوق حيوانات. كتبنا الوسيط [[Box<Animal>]].',hl:'1-3',marks:[{k:'par',t:'circle'}]},
+  {say:'استدعاء بـ [[Box<Animal>]] يعمل بلا مشكلة.',hl:'4',ok:'4',show:['r1']},
+  {say:'لكن [[Box<Dog>]] مرفوض، لأن صندوق الكلاب نوع مختلف عن صندوق الحيوانات (الثبات).',hl:'5',err:'5',show:['r2'],marks:[{k:'v2',t:'cross'}]},
+  {say:'و[[Box<Cat>]] مرفوض أيضاً. فالتابع ما تفيدنا إلا مع صندوق الحيوانات.',hl:'6',err:'6',show:['r3'],marks:[{k:'v3',t:'cross'}]},
+  {say:'الحل البدائي أن نكتب تابع لكل نوع: واحدة للكلاب وواحدة للقطط... وهذا تكرار.',show:['dup'],marks:[{k:'dup',t:'ul'}]},
+  {say:'الفكرة: بدل ما أكتب نوعاً محدداً بين [[<>]]، أكتب علامة استفهام [[?]]. نقرؤها: <b>«أي نوع، ما يهمني»</b>. يعني [[Box<?>]] هو صندوق من أي نوع.',show:['wq'],hide:['r1','r2','r3','dup'],marks:[{k:'wq',t:'circle'}]},
+  {say:'هذه العلامة اسمها <b>Wildcard</b> أي البطاقة البيضاء: بطاقة فاضية تنطبق على أي نوع. فكل هذه الصناديق تدخل في [[Box<?>]].',show:['wdemo'],marks:[{k:'wdemo',t:'circle'}]},
+  {say:'نريد صندوق حيوانات فقط: لذلك نضيف شرطاً [[? extends Animal]] أي «أي نوع بشرط أن يكون حيواناً». نشرحه بعد شريحتين.',show:['wbound'],hide:['wdemo'],marks:[{k:'wbound',t:'circle'}]},
+ ]});
+
+slide({title:'الرمز ? غير المحدد',code:'unb',
+ board:()=>`<div class="board panel">
+   <div style="text-align:center" class="rv" data-k="mb"><div class="chip y" style="font-size:20px">Box&lt;?&gt;</div>
+     <div class="big" style="color:var(--o);font-size:68px;line-height:1.1">?</div><div class="arAr" style="color:var(--mute)">صندوق لا نعرف نوع محتواه</div></div>
+   <table class="tbl"><tr><th>العملية</th><th>النتيجة</th></tr>
+    <tr class="rv" data-k="t1"><td>الاستدعاء بأي صندوق</td><td><span class="verdict ok">✔ [[Box<String>]] و [[Box<Integer>]]</span></td></tr>
+    <tr class="rv" data-k="t2"><td>القراءة [[b.get()]]</td><td><span class="verdict ok">✔ لكن النتيجة [[Object]] فقط</span></td></tr>
+    <tr class="rv" data-k="t3"><td>الكتابة [[b.set("x")]]</td><td><span class="verdict no">✘ مرفوضة</span></td></tr>
+    <tr class="rv" data-k="t4"><td>الكتابة [[b.set(null)]]</td><td><span class="verdict ok">✔ الاستثناء الوحيد</span></td></tr></table></div>`,
+ steps:[
+  {say:'[[Box<?>]] تعني صندوقاً لا نعرف نوع محتواه، وقد يكون أي شيء.',hl:'1',show:['mb'],marks:[{k:'mb',t:'circle'}]},
+  {say:'لذلك تقبل التابع [[show]] أي صندوق: [[Box<String>]] و [[Box<Integer>]] وغيرهما.',hl:'6-7',ok:'6-7',show:['mb','t1']},
+  {say:'القراءة ممكنة، لكن المترجم لا يعرف النوع فيعطينا النتيجة كـ [[Object]] فقط.',hl:'2',ok:'2',show:['t2']},
+  {say:'الكتابة غير ممكنة: السطر 3 خطأ لأن المترجم لا يعرف هل الصندوق يقبل نصاً أم لا.',hl:'3',err:'3',show:['t3'],marks:[{k:'t3',t:'cross'}]},
+  {say:'الاستثناء الوحيد هو [[null]] فهو يقبل في أي نوع.',hl:'4',ok:'4',show:['t4']},
+ ]});
+
+slide({title:'الحد الأعلى: ? extends',code:'ext',
+ board:()=>`<div class="board panel" style="gap:8px;padding:10px 14px">
+   <div class="row" style="gap:6px"><span class="chip">Box&lt;</span><span class="chip y rv" data-k="f1">?</span><span class="chip b rv" data-k="f2">extends Animal</span><span class="chip">&gt;</span></div>
+   <div class="grid2" style="gap:8px">
+     <div class="card y rv" data-k="l1" style="padding:6px 10px;text-align:center"><b>[[?]]</b> = أي نوع <span style="color:var(--mute)">(مجهول)</span></div>
+     <div class="card b rv" data-k="l2" style="padding:6px 10px;text-align:center"><b>[[extends Animal]]</b> = الشرط: <b>يرث من Animal</b></div></div>
+   <div style="height:clamp(150px,30vh,250px);flex:none">${tree('animal').replace('<svg class="tree"','<svg class="tree" style="height:100%;width:100%"')}</div>
+   <div class="card g rv" data-k="rule" style="text-align:center;padding:6px 10px">المقبول: <b>Animal</b> وكل من <b>يرث منه</b> (Dog و Cat). الأسهم في الشجرة تعني «يرث من».</div></div>`,
+ steps:[
+  {say:'أولاً العلامة [[?]]: لوحدها تعني «أي نوع». لو اكتفينا بها لقبلنا أي صندوق، حتى [[Box<String>]].',hl:'1',show:['f1','l1'],marks:[{k:'q',t:'circle'}]},
+  {say:'ثانياً أضفنا <b>شرطاً</b> بعدها: [[extends Animal]] يعني «أي نوع، <b>بشرط أن يرث من Animal</b>». يعني أنا وضعت شرطاً على العلامة (الوراثة).',hl:'1',show:['f2','l2'],marks:[{k:'xa',t:'circle'}]},
+  {say:'النتيجة: [[Animal]] نفسه، وكل صف يرث منه ([[Dog]] و[[Cat]]) مقبول. ألاحظ الأسهم: كلها تصل إلى [[Animal]].',hl:'5-7',ok:'5-7',cls:{'n-Animal':'cap','n-Dog':'ok','n-Cat':'ok'},show:['rule']},
+  {say:'أما [[String]] فلا يرث من [[Animal]]، و[[Object]] أعلى منه وليس وراثة منه، فهما مرفوضان.',hl:'8',err:'8',cls:{'n-String':'bad','n-Object':'bad'},marks:[{k:'s8',t:'arrow',text:'String لا يرث من Animal ✗',pos:'bottom',c:'r'},{k:'s8',t:'circle'}]},
+  {say:'سميت <b>الحد الأعلى</b> لأن [[Animal]] هو السقف: لا نقبل شيئاً فوقه. ونقرأ المحتوى كـ [[Animal]] لأنه مضمون أنه حيوان.',hl:'2-3',cls:{'n-Animal':'cap'}},
+ ]});
+
+slide({title:'قاعدة extends: قراءة فقط',code:'extr',
+ board:()=>`<div class="board panel" style="gap:8px;padding:10px 14px">
+   <div class="chip b" style="align-self:center">Box&lt;? extends Animal&gt; b</div>
+   <div class="arAr rv" data-k="hd" style="text-align:center;color:var(--mute)">المترجم لا يعرف النوع الحقيقي. قد يكون أياً من هؤلاء:</div>
+   <div class="grid3 rv" data-k="hd"><div class="card" style="padding:8px;text-align:center"><span class="chip b">Box&lt;Dog&gt;</span>
+      <div class="rv" data-k="gA" style="margin-top:6px">get() <span class="verdict ok">✔ Animal</span></div>
+      <div class="rv" data-k="sD">set(Dog) <span class="verdict ok">✔</span></div>
+      <div class="rv" data-k="sA">set(Animal) <span class="verdict no">✘</span></div></div><div class="card" style="padding:8px;text-align:center"><span class="chip b">Box&lt;Cat&gt;</span>
+      <div class="rv" data-k="gA" style="margin-top:6px">get() <span class="verdict ok">✔ Animal</span></div>
+      <div class="rv" data-k="sD">set(Dog) <span class="verdict no">✘</span></div>
+      <div class="rv" data-k="sA">set(Animal) <span class="verdict no">✘</span></div></div><div class="card" style="padding:8px;text-align:center"><span class="chip b">Box&lt;Animal&gt;</span>
+      <div class="rv" data-k="gA" style="margin-top:6px">get() <span class="verdict ok">✔ Animal</span></div>
+      <div class="rv" data-k="sD">set(Dog) <span class="verdict ok">✔</span></div>
+      <div class="rv" data-k="sA">set(Animal) <span class="verdict ok">✔</span></div></div></div>
+   <div class="card r rv" data-k="cc" style="padding:8px 12px;font-size:clamp(14px,1.3vw,17px)"><b>الكتابة نجحت مع بعضها وفشلت مع بعضها</b>، والمترجم لا يعرف أيها الحقيقي، فيرفض <b>كل كتابة</b> (إلا [[null]]). أما القراءة <b>نجحت مع كلها</b>، فهي مقبولة.</div>
+   <div class="rv" data-k="cc" style="text-align:center"><span class="stamp b">منتج Producer: يعطينا قيماً فقط (قراءة)</span></div></div>`,
+ steps:[
+  {say:'عندنا [[b]] من نوع [[Box<? extends Animal>]] وأعطيناه [[Box<Dog>]]. لكن المترجم <b>لا يتذكر</b> أنه صندوق كلاب: يعرف فقط «صندوق حيوانات من نوع ما». فقد يكون أياً من الثلاثة بالأسفل.',hl:'1',show:['hd']},
+  {say:'القراءة [[b.get()]] مقبولة: مهما كان النوع الحقيقي (Dog أو Cat أو Animal) النتيجة <b>حيوان</b> دائماً.',hl:'2',ok:'2',show:['gA']},
+  {say:'الكتابة [[b.set(new Dog())]] مرفوضة: تنجح لو كان [[Box<Dog>]] أو [[Box<Animal>]]، لكنها <b>تفشل</b> لو كان [[Box<Cat>]] (كلب داخل صندوق قطط!). المترجم لا يعرف أيها الحقيقي، فيرفضها احتياطاً.',hl:'3',err:'3',show:['sD'],marks:[{k:'d3',t:'arrow',text:'قد يكون Box<Cat>: ممنوع ✗',pos:'bottom',c:'r'},{k:'d3',t:'circle'}]},
+  {say:'و[[b.set(new Animal())]] مرفوضة أيضاً: لو كان [[Box<Dog>]] أو [[Box<Cat>]] فلا يقبل «حيواناً عاماً» بل نوعه فقط.',hl:'4',err:'4',show:['sA'],marks:[{k:'a4',t:'arrow',text:'حتى Animal ممنوع ✗',pos:'bottom',c:'r'},{k:'a4',t:'circle'}]},
+  {say:'الخلاصة: مع [[? extends]] <b>لا نكتب شيئاً</b> (إلا [[null]])، لأن المترجم لا يعرف النوع الحقيقي. نسميه منتجاً Producer: يعطينا قيماً ولا يستقبل.',hl:'3-4',show:['cc']},
+ ]});
+
+slide({title:'الحد الأدنى: ? super',code:'sup',
+ board:()=>`<div class="board panel" style="gap:6px;padding:8px 12px">
+   <div class="row" style="gap:6px"><span class="chip">Box&lt;</span><span class="chip y rv" data-k="f1">?</span><span class="chip o rv" data-k="f2">super Dog</span><span class="chip">&gt;</span></div>
+   <div class="grid2" style="gap:8px">
+     <div class="card y rv" data-k="l1" style="padding:5px 10px;text-align:center"><b>[[?]]</b> = أي نوع <span style="color:var(--mute)">(مجهول)</span></div>
+     <div class="card o rv" data-k="l2" style="padding:5px 10px;text-align:center"><b>[[super Dog]]</b> = الشرط: <b>Dog أو أحد آبائه</b></div></div>
+   <div style="height:clamp(110px,21vh,180px);flex:none">${tree('animal').replace('<svg class="tree"','<svg class="tree" style="height:100%;width:100%"')}</div>
+   <table class="tbl" style="font-size:clamp(12px,1.15vw,15px)"><tr><th>النوع</th><th>[[Box<? super Dog>]]</th><th>السبب</th></tr><tr class="rv" data-k="tOk"><td><code>Box&lt;Dog&gt;</code></td><td><span class="verdict ok">✔ يقبله</span></td><td>Dog نفسه</td></tr><tr class="rv" data-k="tOk"><td><code>Box&lt;Animal&gt;</code></td><td><span class="verdict ok">✔ يقبله</span></td><td>Animal أب لـ Dog</td></tr><tr class="rv" data-k="tOk"><td><code>Box&lt;Object&gt;</code></td><td><span class="verdict ok">✔ يقبله</span></td><td>Object أب لـ Animal</td></tr><tr class="rv" data-k="tBad"><td><code>Box&lt;Cat&gt;</code></td><td><span class="verdict no">✘ يرفضه</span></td><td>Cat ليس Dog ولا أباً له</td></tr><tr class="rv" data-k="tBad"><td><code>Box&lt;String&gt;</code></td><td><span class="verdict no">✘ يرفضه</span></td><td>لا علاقة له بـ Dog</td></tr></table></div>`,
+ steps:[
+  {say:'أولاً العلامة [[?]]: لوحدها تعني «أي نوع».',hl:'1',show:['f1','l1'],marks:[{k:'q',t:'circle'}]},
+  {say:'ثانياً <b>الشرط</b>: [[super Dog]] بالاتجاه المعاكس لـ extends. يعني «أي نوع، <b>بشرط أن يكون Dog أو أحد آبائه</b>». نبدأ من [[Dog]] ونصعد لفوق: [[Animal]] ثم [[Object]].',hl:'1',show:['f2','l2'],cls:{'n-Dog':'cap'},marks:[{k:'xa',t:'circle'}]},
+  {say:'المقبول: [[Box<Dog>]] و[[Box<Animal>]] و[[Box<Object>]]، لأن Dog وآباءه كلهم ضمن الشرط.',hl:'4-6',ok:'4-6',cls:{'n-Dog':'cap','n-Animal':'ok','n-Object':'ok'},show:['tOk']},
+  {say:'المرفوض: [[Box<Cat>]] لأن Cat ليس Dog ولا أباً له، و[[Box<String>]] لأنه لا علاقة له بـ Dog.',hl:'7',err:'7',cls:{'n-Cat':'bad','n-String':'bad'},show:['tBad'],marks:[{k:'c7',t:'arrow',text:'Cat ليس Dog ولا أباً له ✗',pos:'bottom',c:'r'},{k:'c7',t:'circle'}]},
+  {say:'سميت <b>الحد الأدنى</b> لأن [[Dog]] هو القاع: لا نقبل شيئاً تحته. والسبب: كل صندوق مقبول يقبل بأمان وضع كلب، فالكلب حيوان وهو كائن.',hl:'2',cls:{'n-Dog':'cap'}},
+ ]});
+
+slide({title:'قاعدة super: كتابة فقط',code:'supr',
+ board:()=>`<div class="board panel" style="gap:8px;padding:10px 14px">
+   <div class="chip o" style="align-self:center">Box&lt;? super Dog&gt; b</div>
+   <div class="arAr rv" data-k="hd" style="text-align:center;color:var(--mute)">المترجم لا يعرف النوع الحقيقي. قد يكون أياً من هؤلاء:</div>
+   <div class="grid3 rv" data-k="hd"><div class="card" style="padding:8px;text-align:center"><span class="chip o">Box&lt;Dog&gt;</span><div style="margin-top:6px"></div><div class="rv" data-k="sD">set(Dog) <span class="verdict ok">✔</span></div><div class="rv" data-k="gO"><code>get()</code> كـ Object <span class="verdict ok">✔</span></div><div class="rv" data-k="gD"><code>get()</code> كـ Dog <span class="verdict ok">✔</span></div></div><div class="card" style="padding:8px;text-align:center"><span class="chip o">Box&lt;Animal&gt;</span><div style="margin-top:6px"></div><div class="rv" data-k="sD">set(Dog) <span class="verdict ok">✔</span></div><div class="rv" data-k="gO"><code>get()</code> كـ Object <span class="verdict ok">✔</span></div><div class="rv" data-k="gD"><code>get()</code> كـ Dog <span class="verdict no">✘</span></div></div><div class="card" style="padding:8px;text-align:center"><span class="chip o">Box&lt;Object&gt;</span><div style="margin-top:6px"></div><div class="rv" data-k="sD">set(Dog) <span class="verdict ok">✔</span></div><div class="rv" data-k="gO"><code>get()</code> كـ Object <span class="verdict ok">✔</span></div><div class="rv" data-k="gD"><code>get()</code> كـ Dog <span class="verdict no">✘</span></div></div></div>
+   <div class="card g rv" data-k="cc" style="padding:8px 12px;font-size:clamp(14px,1.3vw,17px)"><b>الكتابة نجحت مع الثلاثة</b> (كلها تقبل كلباً)، فهي مقبولة. والقراءة كـ [[Object]] مقبولة أيضاً. أما القراءة كـ [[Dog]] فنجحت <b>مع بعضها فقط</b>، فتُرفض.</div>
+   <div class="rv" data-k="cc" style="text-align:center"><span class="stamp g">مستهلك Consumer: يستقبل منا قيماً (كتابة)</span></div></div>`,
+ steps:[
+  {say:'عندنا [[b]] من نوع [[Box<? super Dog>]] وأعطيناه [[Box<Animal>]]. المترجم يعرف فقط «صندوق من نوع Dog أو أحد آبائه». فقد يكون أياً من الثلاثة بالأسفل.',hl:'1',show:['hd']},
+  {say:'الكتابة [[b.set(new Dog())]] مقبولة: مهما كان النوع الحقيقي (Dog أو Animal أو Object) فكله <b>يقبل كلباً</b> بأمان.',hl:'2',ok:'2',show:['sD'],marks:[{k:'nd2',t:'arrow',text:'كلب: كل الأنواع تقبله ✓',pos:'bottom',c:'g'},{k:'nd2',t:'circle'}]},
+  {say:'القراءة كـ [[Object]] مقبولة: أي شيء بالصندوق هو كائن Object مهما كان نوعه.',hl:'3',ok:'3',show:['gO'],marks:[{k:'ob',t:'arrow',text:'كائن Object: دائماً ممكن ✓',pos:'bottom',c:'g'},{k:'ob',t:'circle'}]},
+  {say:'القراءة كـ [[Dog]] مرفوضة: تنجح مع [[Box<Dog>]] فقط، وتفشل مع [[Box<Animal>]] و[[Box<Object>]] (قد يحويان قطة أو غيرها). المترجم لا يعرف، فيرفضها.',hl:'4',err:'4',show:['gD'],marks:[{k:'dg',t:'arrow',text:'نريد كلباً! لكن قد يكون Animal أو Object ✗',pos:'bottom',c:'r'},{k:'dg',t:'circle'}]},
+  {say:'الخلاصة: مع [[? super]] <b>نكتب بأمان</b>، لكن القراءة محدودة بـ [[Object]]. نسميه مستهلكاً Consumer: يستقبل منا قيماً.',hl:'2-4',show:['cc']},
+ ]});
+
+slide({title:'قاعدة PECS',code:'pecs',
+ board:()=>`<div class="board panel">
+   <div class="row" style="gap:6px;justify-content:center">
+     <span class="chip b rv" data-k="P" style="font-size:26px">P</span><span class="chip g rv" data-k="E" style="font-size:26px">E</span>
+     <span style="width:14px"></span>
+     <span class="chip o rv" data-k="C" style="font-size:26px">C</span><span class="chip g rv" data-k="Sx" style="font-size:26px">S</span></div>
+   <div class="grid2" style="margin-top:6px">
+     <div class="card b rv" data-k="prod"><b class="t">Producer Extends</b>يعطيك قيماً (تقرأ منه) ⟵ [[extends]]</div>
+     <div class="card o rv" data-k="cons"><b class="t">Consumer Super</b>يستقبل منك قيماً (تكتب فيه) ⟵ [[super]]</div></div>
+   <div class="row rv" data-k="flow" style="flex-wrap:nowrap;gap:8px"><span class="chip b" data-k="src" style="font-size:clamp(12px,1.3vw,17px)">Box&lt;Dog&gt; source</span><span class="arrow ok" style="font-size:16px;white-space:nowrap">get ⟶ set</span><span class="chip o" data-k="dst" style="font-size:clamp(12px,1.3vw,17px)">Box&lt;Animal&gt; target</span></div>
+   <div class="card y rv" data-k="both" style="text-align:center">تقرأ وتكتب معاً؟ لا تستعمل wildcard، بل نوعاً محدداً.</div></div>`,
+ steps:[
+  {say:'الاختصار PECS هو: Producer Extends, Consumer Super.',show:['P','E','C','Sx'],marks:[{k:'P',t:'circle'},{k:'C',t:'circle'}]},
+  {say:'المصدر [[from]] يعطيك قيماً، فهو منتج Producer، لذلك نكتب [[? extends]].',hl:'1',show:['P','E','C','Sx','prod'],marks:[{k:'fr',t:'circle'}]},
+  {say:'الهدف [[to]] يستقبل منك قيماً، فهو مستهلك Consumer، لذلك نكتب [[? super]].',hl:'2',show:['P','E','C','Sx','prod','cons'],marks:[{k:'to',t:'circle'}]},
+  {say:'السطر 3: نقرأ حيواناً من المصدر ونكتبه في الهدف، وهذا آمن في الحالتين.',hl:'3',show:['P','E','C','Sx','prod','cons','flow'],marks:[{k:'src',t:'ul'},{k:'dst',t:'ul'}]},
+  {say:'الاستدعاءان مقبولان: الهدف [[Box<Animal>]] أو حتى [[Box<Object>]].',hl:'5-6',ok:'5-6',show:['P','E','C','Sx','prod','cons','flow']},
+  {say:'وإذا كنت تقرأ وتكتب معاً في الصندوق نفسه، فلا تستعمل wildcard.',show:['P','E','C','Sx','prod','cons','flow','both'],marks:[{k:'both',t:'circle'}]},
+ ]});
+
+slide({title:'Wildcard مع الأنواع الرقمية',code:'num',
+ board:()=>treeBoard('num','[[Number]] وأبناؤه')+'',
+ steps:[
+  {say:'نفس الفكرة تعمل مع [[Number]] وأبنائه [[Integer]] و [[Double]].',hl:'1',cls:{'n-Number':'cap'},marks:[{k:'n-Number',t:'arrow',text:'سقف الأعداد',pos:'top'}]},
+  {say:'نقرأ القيمة كـ [[Number]] فنستدعي [[doubleValue()]] المتوفرة في [[Number]].',hl:'2',marks:[{k:'n-Number',t:'circle'}]},
+  {say:'التابع تقبل أي صندوق عددي لأن [[Integer]] و [[Double]] يرثان من [[Number]].',hl:'4-5',ok:'4-5',cls:{'n-Integer':'ok','n-Double':'ok','n-Number':'ok'}},
+  {say:'أما [[String]] فمرفوض.',hl:'6',err:'6',cls:{'n-String':'bad'},marks:[{k:'n-String',t:'cross'}]},
+  {say:'ومن غير الـ wildcard كنا سنحتاج تابع لكل نوع عددي.',hl:'1-3'},
+ ]});
+
+slide({title:'معاملات النوع بشرط: المشكلة',code:'b1',
+ board:()=>`<div class="board panel" style="text-align:center">
+   <div class="chip y" style="font-size:20px;align-self:center">&lt;T&gt; void printName(T a)</div>
+   <div class="rv" data-k="eye"><span class="arAr">المترجم ينظر إلى [[T]]</span></div>
+   <div class="card r rv" data-k="obj"><b class="t">المترجم يعامل T كأنه [[Object]] فقط</b>و [[Object]] لا يحوي الحقل [[name]].</div>
+   <div class="card y rv" data-k="why">المترجم محق: [[T]] قد يكون [[String]] أو أي نوع آخر ليس له اسم.</div>
+   <div class="card g rv" data-k="need"><b class="t">نريد أن نقول:</b>[[T]] ليس أي نوع، بل نوع من الحيوانات فقط.</div></div>`,
+ steps:[
+  {say:'نريد تابع عامة تطبع اسم أي حيوان، سواء كان [[Dog]] أو [[Cat]] أو [[Animal]]. نكتبها عامة [[<T>]] لتقبل كل الأنواع.',hl:'1',show:['eye']},
+  {say:'لكن داخل التابع لا يعرف المترجم ما هو [[T]]، لذلك يعامله كأنه [[Object]] فقط.',hl:'2',show:['eye','obj']},
+  {say:'والصف [[Object]] لا يحوي الحقل [[name]]، فنحصل على خطأ في السطر 2.',hl:'2',err:'2',show:['eye','obj'],marks:[{k:'nm',t:'cross'}]},
+  {say:'المترجم محق، لأن [[T]] قد يكون [[String]] أو أي نوع ليس له اسم.',show:['eye','obj','why']},
+  {say:'نحتاج أن نخبر المترجم أن [[T]] ليس أي نوع، بل نوع من الحيوانات فقط.',show:['eye','obj','why','need'],marks:[{k:'need',t:'circle'}]},
+ ]});
+
+slide({title:'معاملات النوع بشرط: الحل',code:'b2',
+ board:()=>`<div class="board panel" style="text-align:center">
+   <div class="chip g" style="font-size:20px;align-self:center">&lt;T <span style="color:var(--o)">extends Animal</span>&gt;</div>
+   <div class="card g rv" data-k="m1">[[T]] يجب أن يكون [[Animal]] أو أي صف يرث منه.</div>
+   <div class="card b rv" data-k="m2">الآن يعلم المترجم أن كل [[T]] له الحقل [[name]]، فيسمح بالوصول إليه.</div>
+   <div class="card y rv" data-k="m3"><b class="t">[[extends]] تعمل مع الصف ومع الواجهة (interface)</b>
+     <div class="row" style="margin-top:6px"><span class="chip b">&lt;T extends Animal&gt;</span><span>Animal = <b>صف</b> (class)</span></div>
+     <div class="row" style="margin-top:4px"><span class="chip o">&lt;T extends Pet&gt;</span><span>Pet = <b>واجهة</b> (interface)</span></div>
+     <div style="margin-top:4px">في الحالتين نكتب [[extends]]، <b>ولا نكتب [[implements]]</b> هنا.</div></div></div>`,
+ steps:[
+  {say:'نضيف [[extends Animal]] بعد [[T]] ليصبح [[<T extends Animal>]].',hl:'1',show:['m1'],marks:[{k:'m1',t:'circle'}]},
+  {say:'الآن يعلم المترجم أن كل [[T]] له الحقل [[name]]، فالسطر 2 مقبول.',hl:'2',ok:'2',show:['m1','m2']},
+  {say:'[[Dog]] و [[Cat]] حيوانات، فالاستدعاءان مقبولان.',hl:'4-5',ok:'4-5',show:['m1','m2']},
+  {say:'أما [[String]] فليس حيواناً، فيرفض المترجم الاستدعاء.',hl:'6',err:'6',show:['m1','m2']},
+  {say:'بعد [[T]] نكتب [[extends]] ثم النوع المسموح. وكلمة [[extends]] تُكتب مع الصف مثل [[T extends Animal]]، <b>ومع الواجهة (interface)</b> مثل [[T extends Pet]]. ولا نكتب [[implements]] هناك أبداً.',hl:'1',show:['m1','m2','m3'],marks:[{k:'m3',t:'ul'}]},
+ ]});
+
+slide({title:'T يحفظ النوع: ترجع نفس نوع المدخل',code:'b3a',
+ board:()=>`<div class="board panel" style="gap:8px;padding:10px 14px">
+   <div class="card r rv" data-k="w1"><b class="t">بدون T: التابع يرجع Animal دائماً</b>
+     <div class="row"><span class="chip b">Dog</span><span class="chip b">Dog</span><span class="arrow">⟶ first ⟶</span><span class="chip r">Animal</span><span class="verdict no">✘ نحتاج Casting</span></div></div>
+   <div class="card g rv" data-k="w2"><b class="t">مع T: يرجع نفس النوع الذي دخل</b>
+     <div class="row"><span class="chip b">Dog</span><span class="chip b">Dog</span><span class="arrow">⟶ first ⟶</span><span class="chip g">Dog</span><span class="verdict ok">✔</span></div>
+     <div class="row" style="margin-top:6px"><span class="chip b">Cat</span><span class="chip b">Cat</span><span class="arrow">⟶ first ⟶</span><span class="chip g">Cat</span><span class="verdict ok">✔</span></div></div>
+   <div class="card y rv" data-k="nt"><b>ميزة T أن له اسماً</b>، فنستعمله مرتين: في المدخل وفي الإرجاع. الـ wildcard بلا اسم، فلا تستطيع هذا.</div></div>`,
+ steps:[
+  {say:'هذا <b>تابع</b> (method) اسمه [[first]]: يأخذ حيوانين ويرجع أحدهما. بدون [[T]] نكتب نوع الإرجاع [[Animal]]، فيرجع [[Animal]] دائماً مهما كان الداخل.',hl:'2',show:['w1']},
+  {say:'فلو أعطيناه كلبين وحاولنا حفظ النتيجة في [[Dog]] يعطي خطأ: النتيجة [[Animal]] ولا تتحول لـ [[Dog]] بدون Casting.',hl:'3',err:'3',show:['w1']},
+  {say:'مع [[T]] نكتب التابع هكذا: نوع الإرجاع [[T]] نفسه نوع المدخل. يعني: إذا دخل [[Dog]] يرجع [[Dog]]، وإذا دخل [[Cat]] يرجع [[Cat]].',hl:'6',show:['w2']},
+  {say:'فالنتيجة [[Dog]] مباشرة بدون Casting.',hl:'7',ok:'7',show:['w2']},
+  {say:'ميزة [[T]] أن له <b>اسماً</b>، فنستعمله مرتين: في المدخل وفي الإرجاع. الـ wildcard ما لها اسم، فلا تستطيع هذا.',hl:'6',show:['nt']},
+ ]});
+
+slide({title:'شرطان معاً: T extends Animal & Pet',code:'b3b',
+ board:()=>`<div class="board panel" style="gap:8px;padding:10px 14px">
+   <div class="chip g" style="align-self:center">&lt;T extends Animal <span style="color:var(--o)">&amp; Pet</span>&gt;</div>
+   <div class="grid2">
+    <div class="card b rv" data-k="c1" style="padding:6px 10px"><b class="t">Animal (صف)</b>يعطي: [[x.name]]</div>
+    <div class="card o rv" data-k="c2" style="padding:6px 10px"><b class="t">Pet (واجهة)</b>يعطي: [[x.play()]]</div></div>
+   <table class="tbl"><tr><th>النوع</th><th>Animal؟</th><th>Pet؟</th><th>يقبله التابع care؟</th></tr>
+    <tr class="rv" data-k="rd"><td><code>Dog</code></td><td><span class="verdict ok">✔</span></td><td><span class="verdict ok">✔</span></td><td><span class="verdict ok">✔ مقبول</span></td></tr>
+    <tr class="rv" data-k="rc"><td><code>Cat</code></td><td><span class="verdict ok">✔</span></td><td><span class="verdict no">✘</span></td><td><span class="verdict no">✘ مرفوض</span></td></tr></table>
+   <div class="card y rv" data-k="ord" style="padding:6px 10px">الترتيب: <b>الصف أولاً ثم الواجهات</b> بعد الرمز [[&]].</div></div>`,
+ steps:[
+  {say:'عندنا واجهة [[Pet]] فيها التابع [[play]]، والصف [[Dog]] يرث من [[Animal]] وينفذ [[Pet]].',hl:'1-2'},
+  {say:'الشرط [[T extends Animal & Pet]]: النوع [[T]] لازم يحقق <b>الشرطين معاً</b>: يرث من [[Animal]] وينفذ [[Pet]]. نفصل بينهما بالرمز [[&]].',hl:'3',show:['c1','c2','ord']},
+  {say:'لذلك داخل التابع نقدر نستعمل [[x.name]] (من Animal) و[[x.play()]] (من Pet)، لأن المترجم متأكد أن الاثنين موجودان.',hl:'4-5',show:['c1','c2','ord']},
+  {say:'استدعاء بـ [[Dog]] مقبول: هو Animal وهو Pet.',hl:'7',ok:'7',show:['rd']},
+  {say:'استدعاء بـ [[Cat]] مرفوض: هو Animal لكن ليس Pet، والتابع يريد الشرطين معاً.',hl:'8',err:'8',show:['rc']},
+ ]});
+
+slide({title:'Wildcard أم معامل نوع T؟',code:'wt',
+ board:()=>`<div class="board panel" style="gap:8px;padding:10px 14px">
+   <div class="grid2">
+    <div class="card y rv" data-k="wl"><b class="t">Wildcard [[?]]</b>لا يهمني النوع
+      <div class="rv" data-k="sh1" style="margin-top:6px"><code>show(Box&lt;String&gt;)</code> <span class="verdict ok">✔</span></div>
+      <div class="rv" data-k="sh2"><code>show(Box&lt;Integer&gt;)</code> <span class="verdict ok">✔</span></div></div>
+    <div class="card g rv" data-k="tw"><b class="t">معامل [[T]]</b>النوع نفسه بالمكانين
+      <div class="rv" data-k="sw1" style="margin-top:6px"><code>swap(Box&lt;String&gt;, Box&lt;String&gt;)</code> <span class="verdict ok">✔</span></div>
+      <div class="rv" data-k="sw2"><code>swap(Box&lt;String&gt;, Box&lt;Integer&gt;)</code> <span class="verdict no">✘</span></div></div></div>
+   <div class="card r rv" data-k="why">التبديل يضع قيمة [[a]] داخل [[b]] والعكس. لو [[a]] نص و[[b]] أعداد: سنضع <b>نصاً داخل صندوق أعداد</b>!</div>
+   <div class="card rv" data-k="rule"><b>القاعدة:</b> لا أحتاج اسم النوع ← wildcard. النوع يتكرر، أو يرتبط بالإرجاع ← [[T]].</div></div>`,
+ steps:[
+  {say:'هذا <b>تابع</b> اسمه [[show]] يستقبل [[Box<?>]]: لا يهمه نوع الصندوق. نستعمل الـ wildcard عندما لا نحتاج أن نسمّي النوع.',hl:'1-2',show:['wl']},
+  {say:'نمرر [[Box<String>]] ثم [[Box<Integer>]]: نوعان مختلفان، والاثنان مقبولان.',hl:'3-4',ok:'3-4',show:['sh1','sh2']},
+  {say:'والتابع [[swapValues]] يبدّل محتوى صندوقين: يأخذ قيمة [[a]] ويضعها في [[b]] والعكس. لذلك كتبنا [[T]] مرتين: الصندوقان من النوع نفسه.',hl:'6-11',show:['tw']},
+  {say:'[[String]] مع [[String]]: مقبول.',hl:'12',ok:'12',show:['sw1']},
+  {say:'[[String]] مع [[Integer]]: مرفوض، لأن التبديل سيضع نصاً داخل صندوق أعداد!',hl:'13',err:'13',show:['sw2','why']},
+  {say:'القاعدة: إذا لم أحتج اسم النوع فالـ wildcard أبسط. وإذا احتجت أن يتكرر النوع أو يرتبط بالإرجاع فأستعمل [[T]].',show:['rule']},
+ ]});
+
+slide({title:'المفاضلة: مرونة التابع أم وضوحه',code:'to',
+ board:()=>`<div class="board panel" style="gap:8px;padding:10px 14px">
+   <div class="card rv" data-k="info" style="padding:6px 10px;font-size:clamp(13px,1.2vw,16px)">عندنا: <code>dogBox</code> = [[Box<Dog>]] · <code>animalBox</code> = [[Box<Animal>]] · <code>dogBox2</code> = [[Box<Dog>]]</div>
+   <div class="grid2">
+    <div class="card y rv" data-k="cp" style="padding:8px 10px"><b class="t">تابع copy (wildcard)</b>المصدر [[? extends]] والهدف [[? super]]. <b>مرن</b> لكن توقيعه أطول.</div>
+    <div class="card b rv" data-k="c2" style="padding:8px 10px"><b class="t">تابع copy2 (T)</b>نوع واحد [[T]] للصندوقين. <b>أوضح</b> لكن أقل مرونة.</div></div>
+   <table class="tbl"><tr><th>الاستدعاء</th><th>النتيجة</th></tr>
+    <tr class="rv" data-k="r1"><td><code>copy(dogBox, animalBox)</code></td><td><span class="verdict ok">✔ مقبول</span></td></tr>
+    <tr class="rv" data-k="r2"><td><code>copy2(dogBox, animalBox)</code></td><td><span class="verdict no">✘ T لا يكون Dog وAnimal معاً</span></td></tr>
+    <tr class="rv" data-k="r3"><td><code>copy2(dogBox, dogBox2)</code></td><td><span class="verdict ok">✔ النوع نفسه</span></td></tr></table>
+   <div class="card g rv" data-k="adv" style="padding:6px 10px">wildcard للوسائط عندما لا أحتاج اسم النوع، و[[T]] عندما يرتبط وسيطان أو وسيط وقيمة الإرجاع. <b>ولا wildcard في نوع الإرجاع.</b></div></div>`,
+ steps:[
+  {say:'هذا <b>تابع واحد</b> (method) اسمه [[copy]]: يستقبل صندوقين وينسخ القيمة من الأول إلى الثاني. وهو يستعمل الـ wildcard في وسائطه.',hl:'1-2',show:['info','cp']},
+  {say:'وهذا <b>تابع آخر</b> اسمه [[copy2]]: يقوم بالمهمة نفسها لكن بمعامل النوع [[T]]، أي نوع واحد للصندوقين. أوضح لأنه يسمّي النوع، لكنه أقل مرونة.',hl:'3-4',show:['c2']},
+  {say:'نستدعي [[copy]] بـ [[dogBox]] و[[animalBox]]: مقبول، لأن المصدر [[extends]] والهدف [[super]].',hl:'6',ok:'6',show:['r1']},
+  {say:'ونستدعي [[copy2]] بالصندوقين نفسيهما: مرفوض! لأن [[T]] يجب أن يكون نوعاً واحداً، وهنا الصندوقان [[Dog]] و[[Animal]].',hl:'7',err:'7',show:['r2']},
+  {say:'ومع صندوقين من النوع نفسه ([[Dog]] و[[Dog]]) يقبله [[copy2]].',hl:'8',ok:'8',show:['r3']},
+  {say:'القاعدة: wildcard للوسائط عندما لا أحتاج اسم النوع، و[[T]] عندما يرتبط وسيطان أو وسيط وقيمة الإرجاع. ولا نضع wildcard في نوع الإرجاع.',show:['adv']},
+ ]});
+
+slide({title:'ملاحظات وقيود',code:'notes',
+ board:()=>`<div class="board panel">
+   <div class="card g rv" data-k="n1"><b class="t">الـ wildcard في نوع المتغير أو الوسيط فقط</b>ولا يجوز [[new Box<?>()]].</div>
+   <div class="card r rv" data-k="n2"><b class="t">لا يجوز جمع extends وsuper في wildcard واحد</b>[[Box<? extends A super B>]] خطأ.</div>
+   <div class="card b rv" data-k="n3"><b class="t">[[Box<?>]] تعادل [[Box<? extends Object>]]</b>والرمز [[?]] وحده لا يعني الصف Object، بل نوعاً مجهولاً.</div>
+   <div class="card y rv" data-k="n4">في الجلسات القادمة سنستعمل wildcards كثيراً مع المجموعات Collections.</div></div>`,
+ steps:[
+  {say:'الـ wildcard يستعمل في نوع المتغير أو الوسيط فقط. السطر 1 مقبول.',hl:'1',ok:'1',show:['n1']},
+  {say:'لا يجوز [[new Box<?>()]]: لا نستطيع إنشاء صندوق بنوع مجهول.',hl:'2',err:'2',show:['n1'],marks:[{k:'n1',t:'ul'}]},
+  {say:'ولا يجوز جمع [[extends]] و [[super]] في wildcard واحد.',hl:'4-5',err:'5',show:['n1','n2']},
+  {say:'[[Box<?>]] تعادل [[Box<? extends Object>]]. والرمز [[?]] ليس الصف [[Object]]، بل نوع مجهول.',show:['n1','n2','n3']},
+  {say:'سنستعمل wildcards كثيراً مع Collections في الجلسات القادمة.',show:['n1','n2','n3','n4']},
+ ]});
+
+/* ---- solved exercises ---- */
+const out=(txt)=>`<div class="term rv" data-k="out"><span class="p">المخرج:</span>\n${txt}</div>`;
+const exBoard=(head,body,txt)=>()=>`<div class="board panel"><h3>${head}</h3>${body}${out(txt)}</div>`;
+
+slide({title:'تمرين 1: إثبات أن Box<Dog> ليس Box<Animal>',code:'ex1',
+ board:exBoard('ما المطلوب؟',`<div class="card b">تعريف الصفوف التي سنعمل عليها، وإثبات أن [[Box<Dog>]] ليس [[Box<Animal>]].</div>
+   <div class="card r rv" data-k="e21"><b class="t">السطر 21 مرفوض</b>رغم أن [[Dog]] هو [[Animal]]، فإن [[Box<Dog>]] ليس [[Box<Animal>]] (Invariance).</div>`,'Rex\nRex'),
+ steps:[
+  {say:'الأب [[Animal]]: فيه اسم ومنشئ.',hl:'1-4'},
+  {say:'[[Dog]] و [[Cat]] يرثان من [[Animal]] ويمرران الاسم للأب.',hl:'5-10'},
+  {say:'الصف العام [[Box<T>]] من الجلسة السابقة. سنستعمل هذه الصفوف في التمارين القادمة.',hl:'11-16'},
+  {say:'وراثة عادية: كلب داخل متغير حيوان، وهذا مقبول.',hl:'19',ok:'19'},
+  {say:'السطر 20: صندوق كلاب [[Box<Dog>]].',hl:'20'},
+  {say:'السطر 21 مرفوض: Invariance.',hl:'21',err:'21',show:['e21']},
+  {say:'نطبع الاسم من المتغيرين.',hl:'22-23',show:['e21','out']},
+ ]});
+
+slide({title:'تمرين 2: تابع تقبل أي صندوق ?',code:'ex2',
+ board:exBoard('Box<?> تقبل أي نوع',`<div class="row"><span class="chip y">Box&lt;String&gt;</span><span class="chip y">Box&lt;Integer&gt;</span></div>
+   <div class="card r rv" data-k="w">القراءة تعطي [[Object]] لأن النوع مجهول، والكتابة مرفوضة.</div>`,'Box contains: Java\nBox contains: 42'),
+ steps:[
+  {say:'السطر 2: [[Box<?>]] تقبل صندوقاً من أي نوع.',hl:'2'},
+  {say:'السطر 3: القراءة ممكنة لكن النتيجة [[Object]] لأن النوع مجهول.',hl:'3',ok:'3'},
+  {say:'السطر 4: الكتابة مرفوضة لأن المترجم لا يعرف نوع الصندوق.',hl:'4',err:'4',show:['w']},
+  {say:'السطر 5: الطباعة تستدعي [[toString]] للقيمة.',hl:'5'},
+  {say:'السطران 8 و 9: صندوق نصوص وصندوق أعداد.',hl:'8-9'},
+  {say:'السطران 10 و 11: التابع نفسها قبلت النوعين.',hl:'10-11',ok:'10-11',show:['w','out']},
+ ]});
+
+slide({title:'تمرين 3: القراءة بـ ? extends',code:'ex3',
+ board:exBoard('ثلاثة صناديق، تابع واحدة',`<div class="row"><span class="chip g">Box&lt;Dog&gt;</span><span class="chip g">Box&lt;Cat&gt;</span><span class="chip g">Box&lt;Animal&gt;</span></div>
+   <div class="card r rv" data-k="s">[[Box<String>]] مرفوض: [[String]] ليس حيواناً.</div>`,'Rex\nTom\nGeneric'),
+ steps:[
+  {say:'السطر 2: الوسيط صندوق محتواه [[Animal]] أو أبناؤه.',hl:'2'},
+  {say:'السطر 3: نقرأ القيمة كـ [[Animal]]، وهذا آمن لأن كل الأنواع المقبولة حيوانات.',hl:'3',ok:'3'},
+  {say:'السطر 4: نطبع الاسم.',hl:'4'},
+  {say:'السطور 7 إلى 9: ثلاثة صناديق بأنواع مختلفة.',hl:'7-9'},
+  {say:'السطور 10 إلى 12: التابع قبلت الأنواع الثلاثة بدل كتابة ثلاث توابع.',hl:'10-12',ok:'10-12'},
+  {say:'السطر 13: [[String]] ليس حيواناً فيرفضه المترجم.',hl:'13',err:'13',show:['s','out']},
+ ]});
+
+slide({title:'تمرين 4: الكتابة بـ ? super',code:'ex4',
+ board:exBoard('ثلاثة صناديق فارغة',`<div class="row"><span class="chip g">Box&lt;Dog&gt;</span><span class="chip g">Box&lt;Animal&gt;</span><span class="chip g">Box&lt;Object&gt;</span></div>
+   <div class="card r rv" data-k="c">[[Box<Cat>]] لا يقبل كلباً، فيرفضه المترجم.</div>`,'Max\nMax'),
+ steps:[
+  {say:'السطر 2: الوسيط صندوق محتواه [[Dog]] أو أي صف أعلى منه.',hl:'2'},
+  {say:'السطر 3: نكتب كلباً بأمان لأن كل الأنواع المقبولة تقبل كلباً.',hl:'3',ok:'3'},
+  {say:'السطور 6 إلى 8: ثلاثة صناديق فارغة: كلب وحيوان وكائن.',hl:'6-8'},
+  {say:'السطور 9 إلى 11: التابع قبلت الصناديق الثلاثة.',hl:'9-11',ok:'9-11'},
+  {say:'السطران 12 و 13: نقرأ من الصندوقين المحددين بنوعهما لنطبع الاسم.',hl:'12-13'},
+  {say:'السطر 14: [[Box<Cat>]] لا يقبل كلباً، فيرفضه المترجم.',hl:'14',err:'14',show:['c','out']},
+ ]});
+
+slide({title:'تمرين 5: النسخ بقاعدة PECS',code:'ex5',
+ board:exBoard('المصدر منتج والهدف مستهلك',`<div class="row"><span class="chip b">Box&lt;Dog&gt; source</span><span class="arrow ok">⟶</span><span class="chip o">Box&lt;Animal&gt; t1</span><span class="chip o">Box&lt;Object&gt; t2</span></div>
+   <div class="card r rv" data-k="rev">العكس [[copy(t1, source)]] مرفوض: [[Box<Dog>]] لا يقبل أن نكتب فيه [[Animal]].</div>`,'Rex'),
+ steps:[
+  {say:'السطر 2: المصدر منتج نقرأ منه، لذلك [[extends]].',hl:'2'},
+  {say:'السطر 3: الهدف مستهلك نكتب فيه، لذلك [[super]].',hl:'3'},
+  {say:'السطر 4: نقرأ حيواناً من المصدر ونكتبه في الهدف، وهذا آمن في الحالتين.',hl:'4',ok:'4'},
+  {say:'السطر 7: المصدر صندوق كلاب. السطران 8 و 9: هدفان: صندوق حيوانات وصندوق كائنات.',hl:'7-9'},
+  {say:'السطران 10 و 11: النسخ مقبول لكليهما.',hl:'10-11',ok:'10-11'},
+  {say:'السطر 13: العكس مرفوض.',hl:'13',err:'13',show:['rev','out']},
+ ]});
+
+slide({title:'تمرين 6: معامل نوع بشرط T extends Animal',code:'ex6',
+ board:exBoard('T يصبح Dog مباشرة',`<div class="row"><span class="chip g">first(Dog, Dog)</span><span class="arrow ok">⟶</span><span class="chip g">Dog</span></div>
+   <div class="card r rv" data-k="s">[[printName("text")]] مرفوض: [[String]] ليس حيواناً.</div>`,'Rex\nRex'),
+ steps:[
+  {say:'السطر 2: [[T extends Animal]] تعني أن [[T]] حيوان أو من أبنائه.',hl:'2'},
+  {say:'السطر 3: نصل إلى [[name]] لأن الشرط يضمن وجوده.',hl:'3',ok:'3'},
+  {say:'السطر 5: [[first]] تأخذ وسيطين من النوع [[T]] نفسه وترجع [[T]].',hl:'5-6'},
+  {say:'السطر 11: استدعاء مقبول لأن [[Dog]] حيوان.',hl:'11',ok:'11'},
+  {say:'السطر 12: النتيجة من نوع [[Dog]] مباشرة بدون Casting لأن [[T]] أصبحت [[Dog]].',hl:'12',ok:'12'},
+  {say:'السطر 14: [[String]] ليس حيواناً فيرفضه المترجم.',hl:'14',err:'14',show:['s','out']},
+ ]});
+
+slide({title:'ماذا تعلمنا من هذه الجلسة',kind:'end',code:null,
+ board:()=>`<div class="board panel"><table class="tbl">
+   <tr><th>أريد...</th><th>أكتب</th><th>مثال</th></tr>
+   <tr class="rv" data-k="a"><td>أن أفهم لماذا لا ترث الأنواع العامة</td><td>Invariance</td><td><code>Box&lt;Dog&gt; ≠ Box&lt;Animal&gt;</code></td></tr>
+   <tr class="rv" data-k="b"><td>أن أقبل أي صندوق</td><td><code>?</code></td><td><code>Box&lt;?&gt;</code></td></tr>
+   <tr class="rv" data-k="c"><td>أن أقرأ من صندوق (منتج)</td><td><code>? extends</code></td><td><code>Box&lt;? extends Animal&gt;</code></td></tr>
+   <tr class="rv" data-k="d"><td>أن أكتب في صندوق (مستهلك)</td><td><code>? super</code></td><td><code>Box&lt;? super Dog&gt;</code></td></tr>
+   <tr class="rv" data-k="e"><td>أن يتكرر النوع أو يرتبط بالإرجاع</td><td><code>&lt;T extends ...&gt;</code></td><td><code>&lt;T extends Animal&gt; T first(T a, T b)</code></td></tr></table>
+   <div class="card g rv" data-k="f" style="text-align:center;font-weight:700">الفكرة في جملة: extends للقراءة، super للكتابة (PECS)، و T عندما أحتاج اسماً للنوع.</div></div>`,
+ steps:[
+  {say:'لنراجع ما تعلمناه. أولاً: لماذا لا ترث الأنواع العامة بعضها؟',show:['a'],marks:[{k:'a',t:'circle'}]},
+  {say:'ثانياً: الرمز [[?]] وأنواعه الثلاثة: [[?]] و [[? extends]] و [[? super]].',show:['a','b','c','d'],marks:[{k:'b',t:'ul'},{k:'c',t:'ul'},{k:'d',t:'ul'}]},
+  {say:'ثالثاً: القراءة مع [[extends]] والكتابة مع [[super]]، وهذه قاعدة PECS.',show:['a','b','c','d'],marks:[{k:'c',t:'circle'},{k:'d',t:'circle'}]},
+  {say:'رابعاً: معاملات النوع بشرط [[T extends]] ومتى نفضلها على الـ wildcard.',show:['a','b','c','d','e'],marks:[{k:'e',t:'circle'}]},
+  {say:'ممتاز! انتهت المحاضرة. جهّزوا حالكم يوم الأربعاء يا أبطال 🔥💪',show:['a','b','c','d','e','f'],marks:[{k:'f',t:'circle'}]},
+ ]});
+
+/* ---------- engine ---------- */
+const $=s=>document.querySelector(s);
+const REVEAL_MS=0;
+const stage=$('#stage');
+let cs=0,ci=0,built=-1;
+function buildSlide(){
+  const sl=S[cs];
+  stage.className='stage'+(sl.code?'':' nocode');
+  stage.innerHTML=(sl.code?codePanel(sl.code):'')+'<div class="col">'+fmt(sl.board())+'</div>'+'<div id="ink"><svg></svg></div><div class="explain" id="say"></div><div id="laser"><svg viewBox="0 0 24 30" width="30" height="30"><path d="M2 2 L2 23 L7.5 18 L11.5 27 L15 25.5 L11 16.5 L18.5 16.5 Z" fill="#0a5c64" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></div>';
+  built=cs;
+  $('#hn').textContent=cs+1;$('#ht').textContent=sl.title;
+  document.title=sl.title+' · Wildcards';
+}
+function stateAt(sl,i){
+  const st={show:new Set(),cls:{},ok:new Set(),err:new Set()};
+  for(let j=0;j<=i;j++){const s=sl.steps[j];
+    if(s.clr){st.ok.clear();st.err.clear();}
+    (s.show||[]).forEach(k=>st.show.add(k));(s.hide||[]).forEach(k=>st.show.delete(k));
+    Object.assign(st.cls,s.cls||{});
+    parseLines(s.ok).forEach(n=>{st.ok.add(n);st.err.delete(n)});parseLines(s.err).forEach(n=>{st.err.add(n);st.ok.delete(n)});
+  }
+  return st;
+}
+const inkSvg=()=>stage.querySelector('#ink svg');
+function rel(el){const r=el.getBoundingClientRect(),s=stage.getBoundingClientRect();return{x:r.left-s.left,y:r.top-s.top,w:r.width,h:r.height}}
+function find(k){return stage.querySelector('[data-k="'+k+'"]')}
+function leadSplit(t){
+  let i=0,n=t.length;
+  while(i<n){
+    if(t.startsWith('[[',i)){const e=t.indexOf(']]',i);i=e<0?n:e+2;continue}
+    if(t[i]==='<'){const e=t.indexOf('>',i);i=e<0?n:e+1;continue}
+    if((t[i]===':'||t[i]==='.'||t[i]==='؟')&&t[i+1]===' '){
+      if(i>8&&i<75)return '<span class="lead">'+t.slice(0,i+(t[i]==='.'?0:1))+'</span>'+t.slice(i+2);
+      break}
+    i++}
+  return t}
+function render(){
+  if(built!==cs)buildSlide();
+  const sl=S[cs],st=stateAt(sl,ci),cur=sl.steps[ci];
+  stage.querySelectorAll('.rv').forEach(e=>e.classList.toggle('on',st.show.has(e.dataset.k)));
+  stage.querySelectorAll('.node').forEach(n=>{n.classList.remove('ok','bad','cap');const c=st.cls[n.dataset.k];if(c)n.classList.add(c)});
+  const hl=new Set(parseLines(cur.hl));
+  stage.querySelectorAll('.ln').forEach(l=>{const n=+l.dataset.n;l.classList.toggle('hl',hl.has(n));l.classList.toggle('ok',st.ok.has(n));l.classList.toggle('err',st.err.has(n));l.classList.toggle('dim',hl.size>0&&!hl.has(n)&&!st.ok.has(n)&&!st.err.has(n))});
+  const hn=stage.querySelector('.ln.hl');if(hn)hn.scrollIntoView({block:'center'});
+  const p=$('#say');
+  const ms0=cur.marks||[],isErr=!!cur.err||ms0.some(m=>m.t==='cross'),isOk=!isErr&&(!!cur.ok||ms0.some(m=>m.t==='tick'));
+  const rdy=p.classList.contains('ready');p.className='explain'+(isErr?' err':isOk?' ok':'')+(rdy?' ready':'');
+  clearTimeout(window._xt);window._xt=setTimeout(()=>{const e=$('#say');if(e)e.classList.add('show')},REVEAL_MS);p.dataset.label=isErr?'✘ خطأ':isOk?'✔ مقبول':'الشرح';
+  p.innerHTML=fmt(leadSplit(cur.say));p.classList.remove('f');void p.offsetWidth;p.classList.add('f');
+  // progress
+  const total=S.reduce((a,s)=>a+s.steps.length,0);let done=0;for(let k=0;k<cs;k++)done+=S[k].steps.length;done+=ci+1;
+  $('#bar i').style.width=(done/total*100)+'%';
+  $('#cnt').textContent=`شريحة ${cs+1} / ${S.length}`;
+  $('#dots').innerHTML=sl.steps.map((_,k)=>`<i class="${k<ci?'d':k===ci?'c':''}" data-i="${k}"></i>`).join('');
+  $('#bprev').disabled=cs===0&&ci===0;$('#bnext').disabled=cs===S.length-1&&ci===sl.steps.length-1;
+  $('#bnext').textContent=ci===sl.steps.length-1&&cs<S.length-1?'الشريحة التالية ▶':'التالي ▶';
+  try{history.replaceState(null,'','#'+(cs+1)+'-'+(ci+1))}catch(e){}
+  requestAnimationFrame(()=>requestAnimationFrame(()=>drawMarks(cur)));
+}
+function effMarks(cur){
+  const sl=S[cs],ex=cur.marks||[];
+  if(!sl.code||!PT[sl.code])return ex;
+  if(ex.some(m=>{const e=find(m.k);return e&&e.closest('.codep')}))return ex;
+  const st=stateAt(sl,ci),ents=[];
+  parseLines(cur.hl).forEach(n=>{const q=PT[sl.code][n];if(q&&find(q[0]))ents.push([n,q])});
+  if(!ents.length)return ex;
+  const auto=[];
+  if(ents.length===1){const n=ents[0][0],q=ents[0][1],bad=st.err.has(n),good=st.ok.has(n);
+    if(q[1])auto.push({k:q[0],t:'arrow',text:q[1],pos:'bottom',c:bad?'r':good?'g':''});
+    auto.push({k:q[0],t:'circle'});
+    if(bad)auto.push({k:q[0],t:'cross'});else if(good)auto.push({k:q[0],t:'tick'});
+  }else ents.slice(0,3).reverse().forEach(e=>auto.push({k:e[1][0],t:'circle'}));
+  return auto.concat(ex);
+}
+function placeExplain(cur){
+  const ex=$('#say');if(!ex)return;
+  const sr=stage.getBoundingClientRect(),mks=effMarks(cur).filter(m=>find(m.k));let tgt=null,pref=null,bnd={x:0,w:sr.width};
+  if(mks.length){const e0=find(mks[0].k),cp0=e0.closest('.codep');if(cp0)bnd=rel(cp0);tgt=rel(e0);if(mks[0].t==='arrow')pref=(mks[0].pos==='bottom')?'down':'up';}
+  else{const hl=[...stage.querySelectorAll('.ln.hl')];if(hl.length){bnd=rel(hl[0].closest('.codep'));const a=rel(hl[0]),b=rel(hl[hl.length-1]);tgt={x:a.x,y:a.y,w:a.w,h:b.y+b.h-a.y};}}
+  if(!tgt)tgt={x:sr.width/2,y:sr.height*0.6,w:0,h:0};
+  const w=ex.offsetWidth,h=ex.offsetHeight,cx=tgt.x+tgt.w/2,x=Math.max(bnd.x+8,Math.min(cx-w/2,bnd.x+bnd.w-w-8));
+  const below=tgt.y+tgt.h+22,above=tgt.y-h-22;let y,dir;
+  const canBelow=below+h<=sr.height-6,canAbove=above>=6;
+  if(pref==='up'&&canBelow||(!pref&&canBelow)){y=below;dir='up'}
+  else if(canAbove){y=above;dir='down'}
+  else if(canBelow){y=below;dir='up'}
+  else{y=Math.max(6,sr.height-h-6);dir='none'}
+  if(!ex.classList.contains('ready')){ex.style.transition='none'}
+  ex.style.left=x+'px';ex.style.top=y+'px';ex.dataset.dir=dir;ex.style.setProperty('--tx',Math.max(22,Math.min(w-22,cx-x))+'px');
+  if(!ex.classList.contains('ready')){void ex.offsetWidth;ex.style.transition='';ex.classList.add('ready')}
+}
+function drawMarks(cur){
+  const ink=stage.querySelector('#ink');if(!ink)return;placeExplain(cur);
+  ink.querySelectorAll('.note,.badge').forEach(e=>e.remove());
+  const svg=inkSvg();svg.innerHTML='';
+  const sr=stage.getBoundingClientRect();svg.setAttribute('viewBox',`0 0 ${sr.width} ${sr.height}`);
+  const laser=$('#laser');let first=true;
+  effMarks(cur).forEach((m,idx)=>{
+    const el=find(m.k);if(!el)return;const r=rel(el);const d=idx*0.35;
+    const cx=r.x+r.w/2,cy=r.y+r.h/2;
+    if(first){laser.style.opacity=1;laser.style.left=(cx-4)+'px';laser.style.top=(cy-2)+'px';first=false;}
+    if(m.t==='circle'){
+      const e=document.createElementNS('http://www.w3.org/2000/svg','path');
+      if(r.w>230||r.h>70){const x0=r.x-7,y0=r.y-7,x1=r.x+r.w+7,y1=r.y+r.h+7,k=12;
+        e.setAttribute('d',`M${x0+k} ${y0+2} L${x1-k} ${y0-1} Q${x1+2} ${y0} ${x1} ${y0+k} L${x1+1} ${y1-k} Q${x1} ${y1+2} ${x1-k} ${y1} L${x0+k} ${y1+2} Q${x0-2} ${y1} ${x0} ${y1-k} L${x0-1} ${y0+k} Q${x0} ${y0-2} ${x0+k+10} ${y0+1}`);}
+      else{const rx=r.w/2+12,ry=Math.max(r.h/2+8,16);
+      const pts=[];for(let a=-0.2;a<=Math.PI*2+0.35;a+=0.12){const k=1+0.04*Math.sin(a*3);pts.push([cx+rx*k*Math.cos(a-1.2),cy+ry*k*Math.sin(a-1.2)]);}
+      e.setAttribute('d','M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L'));}
+      e.setAttribute('pathLength','1');e.style.animationDelay=d+'s';svg.appendChild(e);
+    }else if(m.t==='ul'){
+      const e=document.createElementNS('http://www.w3.org/2000/svg','path');const y=r.y+r.h+4;let dd=`M${r.x} ${y}`;
+      const n=Math.max(4,Math.round(r.w/16));for(let i=1;i<=n;i++)dd+=` Q${r.x+r.w*(i-.5)/n} ${y+(i%2?6:-4)} ${r.x+r.w*i/n} ${y}`;
+      e.setAttribute('d',dd);e.setAttribute('pathLength','1');e.style.animationDelay=d+'s';svg.appendChild(e);
+    }else if(m.t==='tick'||m.t==='cross'){
+      const b=document.createElement('div');b.className='badge '+(m.t==='tick'?'t':'x');b.textContent=m.t==='tick'?'✓':'✕';
+      b.style.left=(r.x+r.w-8)+'px';b.style.top=(r.y-14)+'px';b.style.animationDelay=d+'s';ink.appendChild(b);
+    }else if(m.t==='arrow'){
+      const n=document.createElement('div');n.className='note '+(m.c||'');n.textContent=m.text;n.style.animationDelay=(d+.3)+'s';ink.appendChild(n);
+      const nw=n.offsetWidth,nh=n.offsetHeight;let nx,ny,sx,sy,ex,ey;
+      const pos=m.pos||'top';
+      if(pos==='top'){nx=cx-nw/2;ny=r.y-nh-48;sx=nx+nw/2;sy=ny+nh;ex=cx;ey=r.y-4;}
+      else if(pos==='bottom'){nx=cx-nw/2;ny=r.y+r.h+48;sx=nx+nw/2;sy=ny;ex=cx;ey=r.y+r.h+4;}
+      else if(pos==='left'){nx=r.x-nw-50;ny=cy-nh/2;sx=nx+nw;sy=cy;ex=r.x-4;ey=cy;}
+      else{nx=r.x+r.w+50;ny=cy-nh/2;sx=nx;sy=cy;ex=r.x+r.w+4;ey=cy;}
+      {const cp=el.closest('.codep'),bx=cp?rel(cp):{x:0,w:sr.width};nx=Math.max(bx.x+8,Math.min(nx,bx.x+bx.w-nw-8));}ny=Math.max(8,Math.min(ny,sr.height-nh-8));
+      n.style.left=nx+'px';n.style.top=ny+'px';
+      const e=document.createElementNS('http://www.w3.org/2000/svg','path');
+      const mx=(sx+ex)/2+(pos==='left'||pos==='right'?0:24),my=(sy+ey)/2;
+      e.setAttribute('d',`M${sx} ${sy} Q${mx} ${my} ${ex} ${ey}`);e.setAttribute('pathLength','1');e.style.animationDelay=(d+.45)+'s';svg.appendChild(e);
+      const ang=Math.atan2(ey-my,ex-mx),L=13;const h=document.createElementNS('http://www.w3.org/2000/svg','path');
+      h.setAttribute('d',`M${ex} ${ey} L${ex-L*Math.cos(ang-.45)} ${ey-L*Math.sin(ang-.45)} L${ex-L*Math.cos(ang+.45)} ${ey-L*Math.sin(ang+.45)} Z`);
+      h.setAttribute('class','fillarrow');h.style.animationDelay=(d+.9)+'s';svg.appendChild(h);
+    }
+    if(m.t==='cross'||m.t==='tick'){/* badge only */}
+    if(m.text&&m.t!=='arrow'){const n=document.createElement('div');n.className='note '+(m.c||'');n.textContent=m.text;n.style.left=(r.x)+'px';n.style.top=(r.y+r.h+14)+'px';n.style.animationDelay=(d+.3)+'s';ink.appendChild(n);}
+  });
+  if(first)laser.style.opacity=0;
+  placeExplain(cur);
+}
+/* ---------- sound effects (WebAudio, no files) ---------- */
+let AC=null,SND=true;try{SND=localStorage.getItem('snd')!=='0'}catch(e){}
+function ac(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC}
+function tone(f,t0,d,type,v,f2){const a=ac();if(!a)return;const T=a.currentTime+t0,o=a.createOscillator(),g=a.createGain();o.type=type||'sine';
+  o.frequency.setValueAtTime(f,T);if(f2)o.frequency.exponentialRampToValueAtTime(f2,T+d);
+  g.gain.setValueAtTime(.0001,T);g.gain.exponentialRampToValueAtTime(v||.07,T+.012);g.gain.exponentialRampToValueAtTime(.0001,T+d);
+  o.connect(g);g.connect(a.destination);o.start(T);o.stop(T+d+.03)}
+function swish(t0,d){const a=ac();if(!a)return;const n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);
+  for(let i=0;i<n;i++)x[i]=(Math.random()*2-1)*(1-i/n);
+  const src=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),T=a.currentTime+t0;src.buffer=b;f.type='bandpass';
+  f.frequency.setValueAtTime(1800,T);f.frequency.exponentialRampToValueAtTime(5200,T+d);g.gain.value=.06;src.connect(f);f.connect(g);g.connect(a.destination);src.start(T)}
+const SFX={step(){tone(520,0,.06,'sine',.03)},draw(){tone(700,0,.08,'sine',.02)},
+  ok(){tone(660,0,.12,'sine',.07);tone(880,.1,.2,'sine',.07)},err(){tone(340,0,.16,'sine',.035,270);tone(255,.13,.24,'sine',.03,215)},
+  slide(){tone(320,0,.2,'sine',.05,760)},pop(){tone(780,0,.08,'sine',.05)}};
+function playFor(cur,newSlide){
+  if(!SND)return;
+  if(newSlide)SFX.slide();else SFX.step();
+  const ms=cur.marks||[];
+  if(ms.length)setTimeout(()=>SFX.draw(),260);
+  if(ms.some(m=>m.t==='arrow'))setTimeout(()=>SFX.pop(),650);
+  const bad=cur.err||ms.some(m=>m.t==='cross'),good=cur.ok||ms.some(m=>m.t==='tick');
+  if(bad)setTimeout(()=>SFX.err(),700);else if(good)setTimeout(()=>SFX.ok(),700);
+}
+function setSnd(v){SND=v;try{localStorage.setItem('snd',v?'1':'0')}catch(e){}$('#bsnd').textContent=v?'الصوت: تشغيل':'الصوت: كتم';if(v)SFX.pop()}
+/* ---------- narrated mode (only in wildcards_narrated.html) ---------- */
+const NARR=/*NARR_FLAG*/false;
+let AUD=null,AUTO=true,RATE=1,STARTED=false,PAUSED=false,VOICE='laith';
+try{VOICE=localStorage.getItem('voice')||'laith'}catch(e){}
+function stopAudio(){if(AUD){AUD.onended=null;AUD.onerror=null;AUD.pause();AUD=null}}
+function playNarr(){
+  if(!NARR||!STARTED)return;stopAudio();
+  const a=new Audio('audio/'+VOICE+'/s'+cs+'_'+ci+'.mp3');a.playbackRate=RATE;AUD=a;
+  const adv=()=>{if(AUTO&&!PAUSED)setTimeout(()=>{if(AUD===a)next()},700)};
+  a.onended=adv;a.onerror=()=>setTimeout(()=>{if(AUD===a)adv()},3500);
+  if(!PAUSED)a.play().catch(()=>{});
+}
+function go(s,i,silent){const ns=s!==cs;cs=Math.max(0,Math.min(S.length-1,s));ci=Math.max(0,Math.min(S[cs].steps.length-1,i));render();if(!silent&&!NARR)playFor(S[cs].steps[ci],ns);playNarr();}
+function next(){if(ci<S[cs].steps.length-1)go(cs,ci+1);else if(cs<S.length-1)go(cs+1,0);}
+function prev(){if(ci>0)go(cs,ci-1);else if(cs>0)go(cs-1,S[cs-1].steps.length-1);}
+$('#bnext').onclick=next;$('#bprev').onclick=prev;
+$('#dots').onclick=e=>{const i=e.target.dataset&&e.target.dataset.i;if(i!==undefined)go(cs,+i)};
+document.addEventListener('keydown',e=>{
+  if($('#menu').classList.contains('on')){if(e.key==='Escape')$('#menu').classList.remove('on');return;}
+  if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();next();}
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==='Home'){go(0,0)}else if(e.key==='End'){go(S.length-1,S[S.length-1].steps.length-1)}
+  else if(e.key==='f'||e.key==='F'){fs()}else if(e.key==='s'||e.key==='S'){setSnd(!SND)}else if(e.key==='m'||e.key==='M'){openMenu()}
+});
+function fs(){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();else document.exitFullscreen();}
+$('#bfs').onclick=fs;$('#bsnd').onclick=()=>setSnd(!SND);setSnd(SND);
+function openMenu(){
+  $('#mlist').innerHTML=S.map((s,i)=>`<a data-s="${i}" class="${s.code&&/^ex/.test(s.code)?'ex':''}"><b>${i+1}</b>${esc(s.title)}</a>`).join('');
+  $('#menu').classList.add('on');
+}
+$('#bmenu').onclick=openMenu;
+$('#menu').onclick=e=>{const a=e.target.closest('a');if(a){go(+a.dataset.s,0);$('#menu').classList.remove('on')}else if(e.target.id==='menu')$('#menu').classList.remove('on')};
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>drawMarks(S[cs].steps[ci]),150)});
+if(NARR){document.body.classList.add('narr');$('#start').classList.add('on');$('#bsnd').style.display='none';SND=false;
+  const begin=v=>{VOICE=v;try{localStorage.setItem('voice',v)}catch(e){}$('#bvoice').value=v;STARTED=true;$('#start').classList.remove('on');playNarr()};
+  $('#s_laith').onclick=()=>begin('laith');$('#s_hamed').onclick=()=>begin('hamed');
+  $('#bvoice').value=VOICE;
+  $('#bvoice').onchange=e=>{VOICE=e.target.value;try{localStorage.setItem('voice',VOICE)}catch(x){}playNarr()};
+  $('#brate').onchange=e=>{RATE=+e.target.value;if(AUD)AUD.playbackRate=RATE};
+  $('#bauto').onclick=()=>{AUTO=!AUTO;$('#bauto').textContent='تقدم تلقائي: '+(AUTO?'تشغيل':'إيقاف')};
+  const toggle=()=>{PAUSED=!PAUSED;$('#bplay').textContent=PAUSED?'متابعة':'إيقاف مؤقت';if(AUD){if(PAUSED)AUD.pause();else AUD.play().catch(()=>{})}else if(!PAUSED&&STARTED)playNarr()};
+  $('#bplay').onclick=toggle;
+  document.addEventListener('keydown',e=>{if((e.key==='p'||e.key==='P')&&STARTED)toggle()});
+}
+const m=location.hash.match(/#(\d+)-(\d+)/);
+go(m?+m[1]-1:0,m?+m[2]-1:0,true);
+</script>
+</body>
+</html>

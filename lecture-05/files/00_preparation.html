@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تحضير المحاضرة الخامسة: Wildcards</title>
+<style>
+  body{font-family:Tahoma,Arial,sans-serif;background:#f6f8fb;color:#1f2937;margin:0;line-height:1.9}
+  .wrap{max-width:780px;margin:0 auto;padding:24px 16px 48px}
+  h1{font-size:1.6rem;margin:0 0 4px}
+  .sub{color:#6b7280;margin-bottom:24px}
+  section{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;margin-bottom:16px}
+  h2{font-size:1.15rem;margin:0 0 8px;color:#0e7c86}
+  .big{background:#e3f4f5;border-right:5px solid #0e7c86;padding:12px 16px;border-radius:8px;font-size:1.1rem;font-weight:bold}
+  pre{direction:ltr;text-align:left;background:#0f172a;color:#e2e8f0;padding:12px 16px;border-radius:8px;overflow-x:auto;line-height:1.6}
+  code{direction:ltr;unicode-bidi:embed;background:#eef2f7;padding:1px 6px;border-radius:4px}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid #e5e7eb;padding:8px 10px;text-align:right}
+  th{background:#f1f5f9}
+  .bad{color:#b91c1c}.good{color:#15803d}
+  .board{background:#fef9c3;border:2px dashed #ca8a04;border-radius:12px;padding:14px 18px;font-size:1.2rem;font-weight:bold;text-align:center}
+  ul{margin:6px 0;padding-right:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>تحضير المحاضرة الخامسة: Wildcards</h1>
+<div class="sub">قبل الحصة، حوالي 10 دقائق، قبل فتح الشرائح</div>
+
+<section>
+  <h2>1) استرجاع سريع للمحاضرة الماضية (3 دقائق)</h2>
+  <p>اسأل الطلاب بصوت عالٍ، وخذ جواباً أو اثنين لكل سؤال:</p>
+  <ul>
+    <li>شو الفرق بين <code>Box&lt;String&gt;</code> و<code>Box&lt;Integer&gt;</code>؟ <span class="good">(نفس الصف، نوع مختلف بداخله)</span></li>
+    <li>شو فايدة الـ Generics مقارنة بـ <code>Object</code>؟ <span class="good">(الخطأ يظهر عند الترجمة وليس عند التشغيل)</span></li>
+    <li>شو يعني <code>T</code>؟ <span class="good">(مكان فاضي لنوع نحدده وقت الاستعمال)</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2>2) الوراثة بدقيقتين (قبل أي كود جديد)</h2>
+  <pre>class Animal { }
+class Dog extends Animal { }
+class Cat extends Animal { }
+
+Animal a = new Dog();   // مقبول: الكلب هو حيوان</pre>
+  <p>اكتب على السبورة بجانب الكود: <b>الكلب هو حيوان</b>. هذه العلاقة بين <b>حيوانين</b>. لا تنتقل للنقطة التالية قبل أن يؤكد الجميع أنها واضحة.</p>
+</section>
+
+<section>
+  <h2>3) السؤال اللغز (بدون تصحيح)</h2>
+  <div class="big">الكلب هو حيوان. فهل <u>صندوق الكلاب</u> هو <u>صندوق حيوانات</u>؟</div>
+  <p>اطلب رفع الأيدي: نعم أو لا. <b>لا تصحّح</b> ولا تعلّق، وقل لهم: «بنعرف الجواب بالشريحة الثانية، وبنعرف ليش».</p>
+  <p>الجواب المتوقع منهم أغلب الأحيان «نعم»، وهذا سبب أن الدرس مهم: الجواب الصحيح <span class="bad">لا</span>.</p>
+</section>
+
+<section>
+  <h2>4) فكرة القفصين (احفظها قبل الحصة)</h2>
+  <p>قفص لافتته «كلاب فقط»، وقفص ثاني لافتته «أي حيوان». الكلب حيوان، <b>لكن هذا لا يجعل القفصين نفس الشيء</b>: لو اعتبرنا قفص الكلاب قفص حيوانات، أحدهم سيضع قطة فيه، وعندها ينهار البرنامج. هذا بالضبط ما تمنعه Java.</p>
+</section>
+
+<section>
+  <h2>5) خريطة الحصة (7 عناوين)</h2>
+  <table>
+    <tr><th>#</th><th>العنوان</th><th>بكلمة وحدة</th></tr>
+    <tr><td>1</td><td>الثبات <code>Invariance</code></td><td><code>Box&lt;Dog&gt;</code> ليس <code>Box&lt;Animal&gt;</code></td></tr>
+    <tr><td>2</td><td>الرمز <code>?</code></td><td>أي نوع، لا يهمني</td></tr>
+    <tr><td>3</td><td><code>? extends</code></td><td>للقراءة: النوع أو من يرث منه</td></tr>
+    <tr><td>4</td><td><code>? super</code></td><td>للكتابة: النوع أو من فوقه</td></tr>
+    <tr><td>5</td><td>قاعدة <code>PECS</code></td><td>المنتج extends والمستهلك super</td></tr>
+    <tr><td>6</td><td><code>T extends</code></td><td>معامل نوع بشرط (صف أو interface)</td></tr>
+    <tr><td>7</td><td>Wildcard أم <code>T</code>؟</td><td>أحتاج اسم النوع أم لا</td></tr>
+  </table>
+  <p>بعدها 6 تمارين محلولة. لا تدخل بتفاصيل المجموعات <code>Collections</code> الآن، فهي في المحاضرة القادمة.</p>
+</section>
+
+<section>
+  <h2>6) تجهيز قبل ما يدخلون</h2>
+  <ul>
+    <li>افتح <code>wildcards_interactive.html</code> بالمتصفح واضغط <b>F</b> لملء الشاشة.</li>
+    <li>الأسهم: <b>→</b> للخطوة التالية و<b>←</b> للسابقة، و<b>M</b> لقائمة الشرائح، و<b>S</b> لكتم الصوت.</li>
+    <li>جرّب الشريحتين 2 و9 قبل الحصة: فيهما أكثر نقاط الارتباك.</li>
+    <li>جهّز ملف PDF لتوزعه عليهم بعد الشرح.</li>
+  </ul>
+</section>
+
+<div class="board">للسبورة: الوراثة بين الحيوانات، لكن الصناديق كل صندوق نوع منفصل.</div>
+
+</div>
+</body>
+</html>
